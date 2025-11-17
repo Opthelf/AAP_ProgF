@@ -19,7 +19,7 @@ Avant de cloner le projet, vous devez avoir les logiciels suivants installés et
     Vérification : sbt --version
 
 
-
+//
 2. Stack Technique du Projet (Gérée par sbt)
 Vous n'avez pas besoin d'installer manuellement les éléments suivants. Ils sont définis dans le fichier build.sbt et seront téléchargés et gérés automatiquement par sbt lors du premier build :
 
