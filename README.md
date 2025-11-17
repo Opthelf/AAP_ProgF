@@ -1,8 +1,8 @@
 🛠️ Configuration et Prérequis
 Ce projet est conçu pour fonctionner avec une stack technique spécifique. Pour garantir la compatibilité et éviter les erreurs de build, veuillez vous assurer que votre environnement est configuré comme suit.
 
-//
-1. Prérequis Système (À installer)
+
+//1. Prérequis Système (À installer)
 Avant de cloner le projet, vous devez avoir les logiciels suivants installés et configurés sur votre système :
 
     Java Development Kit (JDK) :
