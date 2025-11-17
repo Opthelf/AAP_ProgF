@@ -1,4 +1,4 @@
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object DataReader {
 
@@ -10,11 +10,12 @@ object DataReader {
     spark.sparkContext.setLogLevel("OFF") //Enlève les warnings et une partie des INFO
     val path = "src/Data/TestProgF.csv"
     val doublon = true
+
     try{
 
       reader(spark,path,doublon) //avec doublon parfait
-
       reader(spark,path,!doublon) //sans doublon parfait
+
     }catch{
       case e: Exception => println(s"Une erreur est survenue: ${e.getMessage}")
     }finally {
@@ -23,7 +24,7 @@ object DataReader {
   }
 
 
-  def reader(s : SparkSession, path : String, doublon : Boolean) : Unit = {
+  def reader(s : SparkSession, path : String, doublon : Boolean) : DataFrame = {
     val res1 = s.read
       .option("header","true")
       .option("inferSchema","true")
@@ -33,7 +34,7 @@ object DataReader {
     }else{
       res1
     }
-    res.show()
+    res
 
   }
 }

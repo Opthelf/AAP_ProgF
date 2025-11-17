@@ -8,6 +8,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "Analyse-et-Prevision-Pollution",
     libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql"  % sparkVersion,
       "org.apache.spark" %% "spark-mllib" % sparkVersion
