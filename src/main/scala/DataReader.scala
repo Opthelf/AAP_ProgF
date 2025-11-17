@@ -1,5 +1,6 @@
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+case class Mesure(Prénom: String,Nom: String)
 object DataReader {
 
   def main(args: Array[String]): Unit = {
@@ -15,9 +16,14 @@ object DataReader {
       import spark.implicits._
       val dataframe = reader(spark,path,doublon) //avec doublon parfait
 
-      //exemple de la fonction filter
+      println("Exemple de l'utilisation de la fonction filter")
       val filtered = dataframe.filter($"Nom" === "Huang")
       filtered.show()
+
+      println("Exemple de l'utilisation de la fonction map")
+      val dataset = dataframe.as[Mesure] //"convertis le dataframe en dataset"
+      val nomPersonne = dataset.map(mesure => mesure.Nom.toUpperCase)
+      nomPersonne.show()
     }catch{
       case e: Exception => println(s"Une erreur est survenue: ${e.getMessage}")
     }finally {
