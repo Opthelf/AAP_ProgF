@@ -37,15 +37,15 @@ Une fois les prérequis système installés :
     
     Pour compiler le projet et télécharger les dépendances :
     
-    Bash
+    
     sbt compile
     
     Pour exécuter la suite de tests :
     
-    Bash
+    
     sbt test
     
     Pour lancer l'application principale :
     
-    Bash
+    
     sbt run
