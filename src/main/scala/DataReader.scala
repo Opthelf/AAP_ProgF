@@ -12,10 +12,12 @@ object DataReader {
     val doublon = true
 
     try{
+      import spark.implicits._
+      val dataframe = reader(spark,path,doublon) //avec doublon parfait
 
-      reader(spark,path,doublon) //avec doublon parfait
-      reader(spark,path,!doublon) //sans doublon parfait
-
+      //exemple de la fonction filter
+      val filtered = dataframe.filter($"Nom" === "Huang")
+      filtered.show()
     }catch{
       case e: Exception => println(s"Une erreur est survenue: ${e.getMessage}")
     }finally {
