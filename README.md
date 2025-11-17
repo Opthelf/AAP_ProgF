@@ -1,6 +1,6 @@
 🛠️ Configuration et Prérequis
 Ce projet est conçu pour fonctionner avec une stack technique spécifique. Pour garantir la compatibilité et éviter les erreurs de build, veuillez vous assurer que votre environnement est configuré comme suit.
-
+//
 1. Prérequis Système (À installer)
 Avant de cloner le projet, vous devez avoir les logiciels suivants installés et configurés sur votre système :
 
@@ -26,7 +26,7 @@ Vous n'avez pas besoin d'installer manuellement les éléments suivants. Ils son
     Scala : 2.13.16
     
     Apache Spark : 4.0.1
-
+//
 3. Build et Lancement
 Une fois les prérequis système installés :
 
