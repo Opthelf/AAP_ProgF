@@ -1,5 +1,3 @@
-Voici une synthèse que vous pouvez copier-coller directement dans votre README.md.
-
 🛠️ Configuration et Prérequis
 Ce projet est conçu pour fonctionner avec une stack technique spécifique. Pour garantir la compatibilité et éviter les erreurs de build, veuillez vous assurer que votre environnement est configuré comme suit.
 
