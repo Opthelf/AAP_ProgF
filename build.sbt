@@ -11,5 +11,4 @@ lazy val root = (project in file("."))
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql"  % sparkVersion,
       "org.apache.spark" %% "spark-mllib" % sparkVersion
-    )
-  )
+  ))
