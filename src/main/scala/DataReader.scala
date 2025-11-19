@@ -58,24 +58,28 @@ object DataReader {
         .drop("pollution_air")// la donnée est reportée dans niveau sans les incertitudes
         .drop("incertitude") //pour simplifier le problème
         .drop("duree_des_mesures")
+
       //qualitative -> quantitative
       val idf_tf2 = encodePollutionLevels(idf_tf1)
         .drop("niveau")
         .drop("niveau_de_pollution_aux_particules")
-      val idf_tf3 = analyzePollutionRisk(idf_tf2)
-
-
-      idf_tf3.show()
 
 
 
       //Statistiques
-//      auber_tf.describe().show()
+
+
 //      chtlt_m_tf.describe().show()
 //      chtlt_r_tf.describe().show()
 //      fk_tf.describe().show()
 //      nation_tf.describe().show()
 //      sg_tf.describe().show()
+      //val idf_anaylze = analyzePollution(idf_tf2)
+//      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
+      //idf_anaylze.show()
+
+
+      //Période critique & Pics horaires
 
 
     }catch{
@@ -181,11 +185,29 @@ object DataReader {
     dfFinal
   }
 
-  def analyzePollutionRisk(dfEncoded: DataFrame): DataFrame = {
-    dfEncoded
-      .groupBy(col("pollution_air")) // 1. Créer les groupes de travail
-      .agg(count("*").as("nombre_de_stations"))
-      // 2. Calculer le risque moyen par station
-      .orderBy(col("nombre_de_stations").asc) // 3. Trier le résultat (du pire au meilleur)
+  def analyzePollution(dfEncoded: DataFrame): DataFrame = { //Par ligne
+    val dfStationsParNiveau = dfEncoded
+      // 1. Regrouper par le niveau de pollution
+      .groupBy(col("nom_de_la_ligne").as("Ligne"))
+      .agg(
+        // 2. Compter le nombre de stations dans ce groupe
+        avg(col("pollution_air")).as("moyenne_pollution_air"),
+        avg(col("pollution_particules")).as("moyenne_pollution_particules"),
+        count("*").as("total_stations_par_ligne")
+      )
+    dfStationsParNiveau
   }
+
+  def analyzeDailyPeak(df : DataFrame, index : String): DataFrame = {
+    val res = df.withColumn("année", year(col("DATE/HEURE")))
+      .withColumn("heure", hour(col("DATE/HEURE")))
+      .drop(col("DATE/HEURE"))
+
+      .groupBy("heure")
+      .agg(avg(col(index)))
+      .orderBy("heure")
+
+    res
+  }
+
 }
