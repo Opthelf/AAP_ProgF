@@ -73,10 +73,10 @@ object DataReader {
       //val idf_anaylze = analyzePollution(idf_tf2)
 //      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
       //idf_anaylze.show()
-      val auber = analyzeDailyPeak(auber_tf, "NO2")
+      val auber = analyzeDailyPeak(auber_tf, "PM10")
       auber.show(24)
       val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
-      val auber_c = analyzeDailyPeak(auber_clean,"NO2")
+      val auber_c = analyzeDailyPeak(auber_clean,"PM10")
       auber_c.show(24)
 
       //Période critique & Pics horaires
