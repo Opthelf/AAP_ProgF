@@ -69,17 +69,18 @@ object DataReader {
       //Statistiques
 
 
-//      chtlt_m_tf.describe().show()
-//      chtlt_r_tf.describe().show()
-//      fk_tf.describe().show()
-//      nation_tf.describe().show()
-//      sg_tf.describe().show()
+
       //val idf_anaylze = analyzePollution(idf_tf2)
 //      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
       //idf_anaylze.show()
-
+      val auber = analyzeDailyPeak(auber_tf, "NO2")
+      auber.show(24)
+      val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
+      val auber_c = analyzeDailyPeak(auber_clean,"NO2")
+      auber_c.show(24)
 
       //Période critique & Pics horaires
+      // Liste des colonnes à analyser (on exclut le timestamp)
 
 
     }catch{
@@ -105,6 +106,7 @@ object DataReader {
     res
 
   }
+
   def dataFrameTransform(data: DataFrame, ignore: Seq[String]): DataFrame = {
 
     val colsToProcess = data.columns.filterNot(c => ignore.contains(c))
@@ -210,4 +212,47 @@ object DataReader {
     res
   }
 
+  def remplacerOutliersParNull(df: DataFrame, colonnes: Array[String]): DataFrame = {
+
+    var dfResultat = df
+    val boundsMap = scala.collection.mutable.Map[String, (Double, Double)]()
+
+    println("--- Nettoyage en cours (Remplacement par NULL) ---")
+
+    colonnes.foreach { colName =>
+      // 1. Calculs Statistiques (IQR)
+      val quantiles = dfResultat.stat.approxQuantile(colName, Array(0.25, 0.75), 0.01)
+      val q1 = quantiles(0)
+      val q3 = quantiles(1)
+      val iqr = q3 - q1
+
+      val rawLowerBound = q1 - 1.5 * iqr
+      val upperBound = q3 + 1.5 * iqr
+
+      // 2. Correction Physique (Empêcher le négatif sauf pour TEMP)
+      val lowerBound = if (colName == "TEMP") {
+        rawLowerBound
+      } else {
+        math.max(0.0, rawLowerBound)
+      }
+
+      // Stockage pour le rapport
+      boundsMap += (colName -> (lowerBound, upperBound))
+
+      // 3. Remplacement conditionnel
+      // SI (valeur < min OU valeur > max) ALORS null SINON garder valeur
+      dfResultat = dfResultat.withColumn(colName,
+        when(col(colName) < lowerBound || col(colName) > upperBound, lit(null))
+          .otherwise(col(colName))
+      )
+    }
+
+    // 4. Rapport
+    println("--- Bornes appliquées ---")
+    boundsMap.foreach { case (k, v) =>
+      println(f"$k%s : [${v._1}%.2f, ${v._2}%.2f]")
+    }
+
+    return dfResultat
+  }
 }
