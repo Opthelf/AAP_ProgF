@@ -3,7 +3,10 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.{col, min, max, lit}
-
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.graphx._
+import org.apache.spark.rdd.RDD
 object DataReader {
 
   def main(args: Array[String]): Unit = {
@@ -19,7 +22,7 @@ object DataReader {
     val nation_rer = "src/Data/station-nation-rer-a0.csv"
     val saint_germain_metro = "src/Data/station-saint-germain-des-pres-de-2024-a-nos-jours-.csv"
 
-    val idf = "src/Data/le-reseau-de-transport-francilien.csv" //À transformer
+    val idf = "src/Data/idf_nettoye/part-00000-48cf0098-677d-4a0d-8f77-74207e9c408e-c000.csv" //À transformer
     val doublon = true
 
     try{
@@ -38,62 +41,131 @@ object DataReader {
 
       //Transformation
       val auber_tf = dataFrameTransform(auberdf, ignore)
-      val chtlt_m_tf = dataFrameTransform(chatelet_metro_df, ignore)
-      val chtlt_r_tf = dataFrameTransform(chatelet_rer_df, ignore_minuscule)
+      val chatelet_m_tf = dataFrameTransform(chatelet_metro_df, ignore)
+      val chatelet_r_tf = dataFrameTransform(chatelet_rer_df, ignore_minuscule)
       val fk_tf = dataFrameTransform(franklin_metro_df, ignore_minuscule)
       val nation_tf = dataFrameTransform(nation_rer_df, ignore_minuscule)
       val sg_tf = dataFrameTransform(saint_germain_metro_df,ignore)
 
       //Transformation Île de France df
       // idf ne possède pas de dates pour ces données on transforme différemment le dataframe
-      val idf_tf1 = idf_df.drop("point_geo")
-        .drop("mesures_d_amelioration_mises_en_place_ou_prevues") //on a déjà les colonnes long & lat
-        .drop("recommandation_de_surveillance")
-        .drop("action_s_qai_en_cours")
-        .drop("lien_vers_les_mesures_en_direct")
-        .drop("air")
-        .drop("actions")
-        .drop("niveau_pollution") // niveau pollution fait une moyenne de pollution entre p_air & p_particules : p_air & p_particules suffisent
-        .drop("niveau_de_pollution")
-        .drop("pollution_air")// la donnée est reportée dans niveau sans les incertitudes
-        .drop("incertitude") //pour simplifier le problème
-        .drop("duree_des_mesures")
+//      val idf_tf1 = idf_df.drop("point_geo")
+//        .drop("mesures_d_amelioration_mises_en_place_ou_prevues") //on a déjà les colonnes long & lat
+//        .drop("recommandation_de_surveillance")
+//        .drop("action_s_qai_en_cours")
+//        .drop("lien_vers_les_mesures_en_direct")
+//        .drop("air")
+//        .drop("actions")
+//        .drop("niveau_pollution") // niveau pollution fait une moyenne de pollution entre p_air & p_particules : p_air & p_particules suffisent
+//        .drop("niveau_de_pollution")
+//        .drop("pollution_air")// la donnée est reportée dans niveau sans les incertitudes
+//        .drop("incertitude") //pour simplifier le problème
+//        .drop("duree_des_mesures")
+//
+//      //qualitative -> quantitative
+//      val idf_tf2 = encodePollutionLevels(idf_tf1)
+//        .drop("niveau")
+//        .drop("niveau_de_pollution_aux_particules")
 
-      //qualitative -> quantitative
-      val idf_tf2 = encodePollutionLevels(idf_tf1)
-        .drop("niveau")
-        .drop("niveau_de_pollution_aux_particules")
-
-
+//      idf_tf2
+//        .coalesce(1)
+//        .write
+//        .option("header","true")
+//        .option("delimiter",";")
+//        .mode("overwrite")
+//        .csv("src/Data/idf_nettoye")
 
       //Statistiques
 
 
 
-      //val idf_anaylze = analyzePollution(idf_tf2)
+      val idf_anaylze = analyzePollution(idf_df)
 //      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
-      //idf_anaylze.show()
+      //idf_anaylze.orderBy("Ligne").show(25)
       val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
+      val chatelet_clean = remplacerOutliersParNull(chatelet_r_tf,Array("PM10","TEMP","HUMI"))
+      val nation_clean = remplacerOutliersParNull(nation_tf,Array("PM10","PM2_5","TEMP","HUMI"))
+      val franklin_clean = remplacerOutliersParNull(fk_tf,Array("NO","NO2","PM10","CO2","TEMP","HUMI"))
+      val saint_germain_clean = remplacerOutliersParNull(sg_tf,Array("PM10","TEMP","HUMI"))
+
 
 
       //Période critique & Pics horaires
-      // Liste des colonnes à analyser (on exclut le timestamp)
       // Utilisation
-      val auber_IG = calculerIndicateurPondere(auber_clean)
-      val df_final = analyzeDailyPeak(auber_IG,"Indicateur_Pollution_Global")
-      val dfDebug = auber_IG.withColumn("heure", hour(col("DATE/HEURE")))
+      val auber_IG = calculerIndicateurDynamique(auber_clean)
+      val chatelet_IG = calculerIndicateurDynamique(chatelet_clean)
+      val nation_IG = calculerIndicateurDynamique(nation_clean)
+      val franklin_IG = calculerIndicateurDynamique(franklin_clean)
+      val saint_germain_IG = calculerIndicateurDynamique(saint_germain_clean)
 
+      val index = "Indicateur_Pollution_Global"
+      val auber_final = analyzeDailyPeak(auber_IG, index)
+      val chatelet_final = analyzeDailyPeak(chatelet_IG, index)
+      val nation_final = analyzeDailyPeak(chatelet_IG, index)
+      val franklin_final = analyzeDailyPeak(franklin_IG, index)
+      val saint_germain_final = analyzeDailyPeak(saint_germain_IG, index)
+
+//      println("Analyse auber rer")
+      //auber_final.show(24)
+//      println("Analyse chatelet rer")
+//      chatelet_final.show(24)
+//      println("Analyse nation rer")
+//      nation_final.show(24)
+//      println("Analyse franklin metro")
+//      franklin_final.show(24)
+//      println("Analyse saint_germain metro")
+//      saint_germain_final.show(24)
+
+      // 1. On transforme le tableau de 24h en une seule ligne avec le nom
+      val dfAuberReady = auber_final
+        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique")) // Moyenne des 24h
+        .withColumn("nom_de_la_station", lit("Auber")) // On remet le nom manuellement
+
+      val dfChateletReady = chatelet_final
+        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
+        .withColumn("nom_de_la_station", lit("Châtelet les Halles"))
+
+      val dfNationReady = nation_final
+        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
+        .withColumn("nom_de_la_station", lit("Nation"))
+
+      // 2. On fusionne
+      val dfPatchwork = dfAuberReady.union(dfChateletReady).union(dfNationReady)
+      dfPatchwork.show()
+
+
+      //val dfDebug = auber_IG.withColumn("heure", hour(col("DATE/HEURE")))
       // On regarde la moyenne de CHAQUE sous-indice par heure
-      dfDebug.groupBy("heure")
-        .agg(
-          avg("Indicateur_Pollution_Global").as("Global"),
-          avg("NO2").as("Score_NO2"),     // Est-ce le diesel des travaux ?
-          avg("PM10").as("Score_PM10"),   // Est-ce la poussière des travaux ?
-          avg("CO2").as("Score_CO2"),     // Est-ce l'arrêt de la ventilation ?
-          count("*").as("Nb_Mesures")         // Y a-t-il très peu de données à 3h ?
-        )
-        .orderBy("heure")
-        .show(24)
+//      dfDebug.groupBy("heure")
+//        .agg(
+//          avg("Indicateur_Pollution_Global").as("Global"),
+//
+//          avg("NO2").as("Score_NO2"),     // Est-ce le diesel des travaux ?
+//          avg("PM10").as("Score_PM10"),   // Est-ce la poussière des travaux ?
+//          avg("CO2").as("Score_CO2"),     // Est-ce l'arrêt de la ventilation ?
+//          avg("PM2_5").as("Score_PM2.5"),
+//          count("*").as("Nb_Mesures")         // Y a-t-il très peu de données à 3h ?
+//        )
+//        .orderBy("heure")
+//        .show(24)
+
+
+
+//GraphX
+// 1. Définition manuelle des séquences de stations (L'ordre est crucial)
+      val brancheA1 = Seq("Saint-Germain-en-Laye", "Le Vésinet - Le Pecq", "Le Vésinet-Centre", "Chatou-Croissy", "Rueil-Malmaison", "Nanterre-Ville", "Nanterre-Université", "Nanterre-Préfecture")
+      val brancheA3 = Seq("Cergy-Le Haut", "Cergy-Saint-Christophe", "Cergy-Préfecture", "Neuville-Université", "Conflans-Fin-d'Oise", "Achères-Ville", "Maisons-Laffitte", "Sartrouville", "Houilles-Carrières-sur-Seine", "Nanterre-Préfecture")
+      val brancheA5 = Seq("Poissy", "Achères-Grand-Cormier", "Maisons-Laffitte") // Rejoint la A3
+
+      val tronconCentral = Seq("Nanterre-Préfecture", "La Défense", "Charles de Gaulle - Etoile", "Auber", "Châtelet les Halles", "Gare de Lyon", "Nation", "Vincennes")
+
+      val brancheA2 = Seq("Vincennes", "Fontenay-sous-Bois", "Nogent-sur-Marne", "Joinville-le-Pont", "Saint-Maur - Créteil", "Le Parc de Saint-Maur", "Champigny", "La Varenne - Chennevières", "Sucy - Bonneuil", "Boissy-Saint-Léger")
+      val brancheA4 = Seq("Vincennes", "Val de Fontenay", "Neuilly-Plaisance", "Bry-sur-Marne", "Noisy-le-Grand - Mont d'Est", "Noisy - Champs", "Noisiel", "Lognes", "Torcy", "Bussy-Saint-Georges", "Val d'Europe", "Marne-la-Vallée - Chessy")
+
+      // Liste de tous les tronçons
+      val tousLesTroncons = Seq(brancheA1, brancheA3, brancheA5, tronconCentral, brancheA2, brancheA4)
+
+
 
 
 
@@ -231,7 +303,7 @@ object DataReader {
     var dfResultat = df
     val boundsMap = scala.collection.mutable.Map[String, (Double, Double)]()
 
-    println("--- Nettoyage en cours (Remplacement par NULL) ---")
+    //println("--- Nettoyage en cours (Remplacement par NULL) ---")
 
     colonnes.foreach { colName =>
       // 1. Calculs Statistiques (IQR)
@@ -267,7 +339,7 @@ object DataReader {
       println(f"$k%s : [${v._1}%.2f, ${v._2}%.2f]")
     }
 
-    return dfResultat
+    dfResultat
   }
 
 
@@ -329,6 +401,199 @@ object DataReader {
     df.withColumn("Indicateur_Pollution_Global", indicateur)
   }
 
+  def calculerIndicateurDynamique(df: DataFrame): DataFrame = {
+
+    // 1. Définition de la configuration idéale (Si tout est présent)
+    // Map("NomColonne" -> (Seuil/Ref, Poids_Ideal))
+    val configPolluants = Map(
+      "NO2"   -> (200.0, 0.20),
+      "PM10"  -> (50.0,  0.15),
+      "PM2_5" -> (25.0,  0.35),
+      "NO"    -> (400.0, 0.10)
+    )
+
+    // Configuration spécifique pour CO2 et Météo (Ref, Poids)
+    // Note: On les sépare car la formule de calcul du score est différente
+    val configCO2 = Map("CO2" -> (1200.0, 0.10))
+    val configMeteo = Map(
+      "TEMP" -> (15.0, 0.05), // Ici 15.0 est l'écart max
+      "HUMI" -> (40.0, 0.05)  // Ici 40.0 est l'écart max
+    )
+
+    // 2. Vérification des colonnes présentes dans le DataFrame
+    val colonnesDispo = df.columns.toSet
+
+    // 3. Calcul de la Somme des Poids des colonnes présentes
+    // On ne garde que les poids des colonnes qui existent vraiment dans 'df'
+    var sommePoids = 0.0
+
+    (configPolluants ++ configCO2 ++ configMeteo).foreach { case (colName, (_, poids)) =>
+      if (colonnesDispo.contains(colName)) {
+        sommePoids += poids
+      }
+    }
+
+    // Sécurité : Si aucune colonne n'est trouvée (fichier vide ou erreurs noms), on renvoie le DF tel quel
+    if (sommePoids == 0.0) return df.withColumn("Indicateur_Synthetique", lit(0.0))
+
+    println(s"Colonnes détectées. Somme des poids bruts : $sommePoids. Recalcul des poids en cours...")
+
+    // 4. Construction de la liste des expressions pondérées
+    var expressionsScores: List[Column] = List()
+
+    // --- A. Traitement des Polluants Classiques (Simple division) ---
+    configPolluants.foreach { case (colName, (ref, poidsOriginal)) =>
+      if (colonnesDispo.contains(colName)) {
+        // Nouveau poids ajusté
+        val poidsAjuste = poidsOriginal / sommePoids
+
+        // Score normalisé (Valeur / Ref)
+        val score = coalesce(col(colName), lit(0)) / ref
+
+        // Ajout à la liste : Score * Poids
+        expressionsScores = expressionsScores :+ (score * poidsAjuste)
+      }
+    }
+
+    // --- B. Traitement du CO2 (Formule avec soustraction du bruit de fond) ---
+    if (colonnesDispo.contains("CO2")) {
+      val (ref, poidsOriginal) = configCO2("CO2")
+      val poidsAjuste = poidsOriginal / sommePoids
+
+      // (Val - 400) / (Ref - 400)
+      val co2Net = when((coalesce(col("CO2"), lit(400)) - 400) < 0, 0)
+        .otherwise(coalesce(col("CO2"), lit(400)) - 400)
+      val score = co2Net / (ref - 400)
+
+      expressionsScores = expressionsScores :+ (score * poidsAjuste)
+    }
+
+    // --- C. Traitement Météo (Distance à l'idéal) ---
+    configMeteo.foreach { case (colName, (ecartMax, poidsOriginal)) =>
+      if (colonnesDispo.contains(colName)) {
+        val poidsAjuste = poidsOriginal / sommePoids
+        val ideal = if (colName == "TEMP") 20.0 else 50.0
+
+        val score = abs(coalesce(col(colName), lit(ideal)) - ideal) / ecartMax
+        expressionsScores = expressionsScores :+ (score * poidsAjuste)
+      }
+    }
+
+    // 5. Somme finale de toutes les expressions
+    val indicateurFinal = expressionsScores.reduce(_ + _)
+
+    df.withColumn("Indicateur_Pollution_Global", indicateurFinal)
+  }
+
+
+
+  /**
+   * Construit le Graphe orienté du RER A et injecte les données de pollution.
+   * @param dfPollution Le DataFrame contenant "nom_de_la_station" et "Indicateur_Synthetique"
+   * @param spark La session Spark active (implicite)
+   * @return Un objet GraphX où les sommets contiennent (NomStation, ScorePollution)
+   */
+
+  def construireGrapheRERA(dfPollution: DataFrame)(implicit spark: SparkSession): Graph[(String, Double), String] = {
+
+    import spark.implicits._
+
+    // --- 1. DÉFINITION DE LA TOPOLOGIE (Séquencement) ---
+    // On définit l'ordre des stations pour chaque branche
+    val dataRER = Seq(
+      ("RER A", "Nanterre-Préfecture", 1, "CENTRE"),
+      ("RER A", "La Défense", 2, "CENTRE"),
+      ("RER A", "Charles de Gaulle - Etoile", 3, "CENTRE"),
+      ("RER A", "Auber", 4, "CENTRE"),
+      ("RER A", "Châtelet les Halles", 5, "CENTRE"),
+      ("RER A", "Gare de Lyon", 6, "CENTRE"),
+      ("RER A", "Nation", 7, "CENTRE"),
+      ("RER A", "Vincennes", 8, "CENTRE"),
+      // Branche A1 (St Germain)
+      ("RER A", "Saint-Germain-en-Laye", 1, "BRANCHE_A1"),
+      ("RER A", "Le Vésinet - Le Pecq", 2, "BRANCHE_A1"),
+      ("RER A", "Le Vésinet-Centre", 3, "BRANCHE_A1"),
+      ("RER A", "Chatou-Croissy", 4, "BRANCHE_A1"),
+      ("RER A", "Rueil-Malmaison", 5, "BRANCHE_A1"),
+      ("RER A", "Nanterre-Ville", 6, "BRANCHE_A1"),
+      ("RER A", "Nanterre-Université", 7, "BRANCHE_A1"),
+      ("RER A", "Nanterre-Préfecture", 8, "BRANCHE_A1"), // Jonction
+      // Branche A3 (Cergy / Poissy simplifiée)
+      ("RER A", "Cergy-Le Haut", 1, "BRANCHE_A3"),
+      ("RER A", "Cergy-Saint-Christophe", 2, "BRANCHE_A3"),
+      ("RER A", "Cergy-Préfecture", 3, "BRANCHE_A3"),
+      ("RER A", "Neuville-Université", 4, "BRANCHE_A3"),
+      ("RER A", "Conflans-Fin-d'Oise", 5, "BRANCHE_A3"),
+      ("RER A", "Achères-Ville", 6, "BRANCHE_A3"),
+      ("RER A", "Maisons-Laffitte", 7, "BRANCHE_A3"),
+      ("RER A", "Sartrouville", 8, "BRANCHE_A3"),
+      ("RER A", "Houilles-Carrières-sur-Seine", 9, "BRANCHE_A3"),
+      ("RER A", "Nanterre-Préfecture", 10, "BRANCHE_A3"), // Jonction
+      // Branche A2 (Boissy)
+      ("RER A", "Vincennes", 1, "BRANCHE_A2"), // Jonction
+      ("RER A", "Fontenay-sous-Bois", 2, "BRANCHE_A2"),
+      ("RER A", "Nogent-sur-Marne", 3, "BRANCHE_A2"),
+      ("RER A", "Joinville-le-Pont", 4, "BRANCHE_A2"),
+      ("RER A", "Saint-Maur - Créteil", 5, "BRANCHE_A2"),
+      ("RER A", "Le Parc de Saint-Maur", 6, "BRANCHE_A2"),
+      ("RER A", "Champigny", 7, "BRANCHE_A2"),
+      ("RER A", "La Varenne - Chennevières", 8, "BRANCHE_A2"),
+      ("RER A", "Sucy - Bonneuil", 9, "BRANCHE_A2"),
+      ("RER A", "Boissy-Saint-Léger", 10, "BRANCHE_A2"),
+      // Branche A4 (Marne-la-Vallée)
+      ("RER A", "Vincennes", 1, "BRANCHE_A4"), // Jonction
+      ("RER A", "Val de Fontenay", 2, "BRANCHE_A4"),
+      ("RER A", "Neuilly-Plaisance", 3, "BRANCHE_A4"),
+      ("RER A", "Bry-sur-Marne", 4, "BRANCHE_A4"),
+      ("RER A", "Noisy-le-Grand - Mont d'Est", 5, "BRANCHE_A4"),
+      ("RER A", "Noisy - Champs", 6, "BRANCHE_A4"),
+      ("RER A", "Noisiel", 7, "BRANCHE_A4"),
+      ("RER A", "Lognes", 8, "BRANCHE_A4"),
+      ("RER A", "Torcy", 9, "BRANCHE_A4"),
+      ("RER A", "Bussy-Saint-Georges", 10, "BRANCHE_A4"),
+      ("RER A", "Val d'Europe", 11, "BRANCHE_A4"),
+      ("RER A", "Marne-la-Vallée - Chessy", 12, "BRANCHE_A4")
+    )
+
+    val dfTopology = spark.createDataFrame(dataRER).toDF("ligne", "nom_station", "ordre", "segment")
+
+    // Helper pour l'ID GraphX
+    def hashId(str: String): Long = str.hashCode.toLong
+
+    // --- 2. CONSTRUCTION DES LIENS (EDGES) ---
+    val windowSpec = Window.partitionBy("segment").orderBy("ordre")
+
+    val edgesRDD: RDD[Edge[String]] = dfTopology
+      .withColumn("station_suivante", lead("nom_station", 1).over(windowSpec))
+      .filter(col("station_suivante").isNotNull)
+      .rdd
+      .map { row =>
+        val src = row.getAs[String]("nom_station")
+        val dst = row.getAs[String]("station_suivante")
+        Edge(hashId(src), hashId(dst), "suivante")
+      }
+
+    // --- 3. CONSTRUCTION DES NOEUDS (VERTICES) avec POLLUTION ---
+    val uniqueStations = dfTopology.select("nom_station").distinct()
+
+    // Jointure avec les données de pollution fournies
+    val verticesRDD: RDD[(VertexId, (String, Double))] = uniqueStations
+      .join(dfPollution, uniqueStations("nom_station") === dfPollution("nom_de_la_station"), "left_outer")
+      .select(
+        col("nom_station"),
+        // Si on n'a pas de donnée pollution pour une station, on met 0.0 par défaut
+        coalesce(col("Indicateur_Synthetique"), lit(0.0)).as("score_pollution")
+      )
+      .rdd
+      .map { row =>
+        val name = row.getAs[String]("nom_station")
+        val score = row.getAs[Double]("score_pollution")
+        (hashId(name), (name, score))
+      }
+
+    // --- 4. CRÉATION DU GRAPHE ---
+    Graph(verticesRDD, edgesRDD)
+  }
 
 }
 
