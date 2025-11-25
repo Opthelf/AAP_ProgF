@@ -10,10 +10,11 @@ import org.apache.spark.rdd.RDD
 object DataReader {
 
   def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder()
-      .appName("CSV Reader")
-      .master("local")
-      .getOrCreate()
+//    val spark = SparkSession.builder()
+//      .appName("CSV Reader")
+//      .master("local")
+//      .getOrCreate()
+
     spark.sparkContext.setLogLevel("OFF") //Enlève les warnings et une partie des INFO
     val auber_rer= "src/Data/auber.csv"
     val chatelet_metro = "src/Data/station-chatelet-2021-maintenant.csv"
@@ -79,31 +80,31 @@ object DataReader {
 
 
 
-      val idf_anaylze = analyzePollution(idf_df)
-//      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
-      //idf_anaylze.orderBy("Ligne").show(25)
-      val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
-      val chatelet_clean = remplacerOutliersParNull(chatelet_r_tf,Array("PM10","TEMP","HUMI"))
-      val nation_clean = remplacerOutliersParNull(nation_tf,Array("PM10","PM2_5","TEMP","HUMI"))
-      val franklin_clean = remplacerOutliersParNull(fk_tf,Array("NO","NO2","PM10","CO2","TEMP","HUMI"))
-      val saint_germain_clean = remplacerOutliersParNull(sg_tf,Array("PM10","TEMP","HUMI"))
-
+//      val idf_anaylze = analyzePollution(idf_df)
+////      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
+//      //idf_anaylze.orderBy("Ligne").show(25)
+//      val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
+//      val chatelet_clean = remplacerOutliersParNull(chatelet_r_tf,Array("PM10","TEMP","HUMI"))
+//      val nation_clean = remplacerOutliersParNull(nation_tf,Array("PM10","PM2_5","TEMP","HUMI"))
+//      val franklin_clean = remplacerOutliersParNull(fk_tf,Array("NO","NO2","PM10","CO2","TEMP","HUMI"))
+//      val saint_germain_clean = remplacerOutliersParNull(sg_tf,Array("PM10","TEMP","HUMI"))
+//
 
 
       //Période critique & Pics horaires
       // Utilisation
-      val auber_IG = calculerIndicateurDynamique(auber_clean)
-      val chatelet_IG = calculerIndicateurDynamique(chatelet_clean)
-      val nation_IG = calculerIndicateurDynamique(nation_clean)
-      val franklin_IG = calculerIndicateurDynamique(franklin_clean)
-      val saint_germain_IG = calculerIndicateurDynamique(saint_germain_clean)
-
-      val index = "Indicateur_Pollution_Global"
-      val auber_final = analyzeDailyPeak(auber_IG, index)
-      val chatelet_final = analyzeDailyPeak(chatelet_IG, index)
-      val nation_final = analyzeDailyPeak(chatelet_IG, index)
-      val franklin_final = analyzeDailyPeak(franklin_IG, index)
-      val saint_germain_final = analyzeDailyPeak(saint_germain_IG, index)
+//      val auber_IG = calculerIndicateurDynamique(auber_clean)
+//      val chatelet_IG = calculerIndicateurDynamique(chatelet_clean)
+//      val nation_IG = calculerIndicateurDynamique(nation_clean)
+//      val franklin_IG = calculerIndicateurDynamique(franklin_clean)
+//      val saint_germain_IG = calculerIndicateurDynamique(saint_germain_clean)
+//
+//      val index = "Indicateur_Pollution_Global"
+//      val auber_final = analyzeDailyPeak(auber_IG, index)
+//      val chatelet_final = analyzeDailyPeak(chatelet_IG, index)
+//      val nation_final = analyzeDailyPeak(chatelet_IG, index)
+//      val franklin_final = analyzeDailyPeak(franklin_IG, index)
+//      val saint_germain_final = analyzeDailyPeak(saint_germain_IG, index)
 
 //      println("Analyse auber rer")
       //auber_final.show(24)
@@ -116,22 +117,22 @@ object DataReader {
 //      println("Analyse saint_germain metro")
 //      saint_germain_final.show(24)
 
-      // 1. On transforme le tableau de 24h en une seule ligne avec le nom
-      val dfAuberReady = auber_final
-        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique")) // Moyenne des 24h
-        .withColumn("nom_de_la_station", lit("Auber")) // On remet le nom manuellement
-
-      val dfChateletReady = chatelet_final
-        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
-        .withColumn("nom_de_la_station", lit("Châtelet les Halles"))
-
-      val dfNationReady = nation_final
-        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
-        .withColumn("nom_de_la_station", lit("Nation"))
-
-      // 2. On fusionne
-      val dfPatchwork = dfAuberReady.union(dfChateletReady).union(dfNationReady)
-      dfPatchwork.show()
+//      // 1. On transforme le tableau de 24h en une seule ligne avec le nom
+//      val dfAuberReady = auber_final
+//        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique")) // Moyenne des 24h
+//        .withColumn("nom_de_la_station", lit("Auber")) // On remet le nom manuellement
+//
+//      val dfChateletReady = chatelet_final
+//        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
+//        .withColumn("nom_de_la_station", lit("Châtelet les Halles"))
+//
+//      val dfNationReady = nation_final
+//        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
+//        .withColumn("nom_de_la_station", lit("Nation"))
+//
+//      // 2. On fusionne
+//      val dfPatchwork = dfAuberReady.union(dfChateletReady).union(dfNationReady)
+//      dfPatchwork.show()
 
 
       //val dfDebug = auber_IG.withColumn("heure", hour(col("DATE/HEURE")))
@@ -165,7 +166,35 @@ object DataReader {
       // Liste de tous les tronçons
       val tousLesTroncons = Seq(brancheA1, brancheA3, brancheA5, tronconCentral, brancheA2, brancheA4)
 
+      def getId(nom: String): Long = nom.hashCode.toLong
 
+      // --- 2. Création des ARÊTES (Edges) ---
+      // On prend chaque liste et on connecte l'élément N à N+1
+      val edgesList = tousLesTroncons.flatMap { ligne =>
+        // 'sliding(2)' crée des paires glissantes : (Station1, Station2), (Station2, Station3)...
+        ligne.sliding(2).map { case Seq(src, dst) =>
+          Edge(getId(src), getId(dst), "suivante")
+        }
+      }
+      val edgesRDD: RDD[Edge[String]] = spark.sparkContext.parallelize(edgesList)
+
+      // --- 3. Création des SOMMETS (Vertices) ---
+      // On prend tous les noms de stations, on dédoublonne (ex: Vincennes apparait 3 fois), et on crée les sommets
+      val verticesList = tousLesTroncons.flatten.distinct.map { nom =>
+        (getId(nom), nom) // (ID, Propriété) -> Ici la propriété est juste le Nom pour l'instant
+      }
+      val verticesRDD: RDD[(Long, String)] = spark.sparkContext.parallelize(verticesList)
+
+      // --- 4. Création du Graphe ---
+      val graphRERA = Graph(verticesRDD, edgesRDD)
+
+      //--- 5. Vérification ---
+      println(s"Le réseau RER A a été modélisé avec ${graphRERA.numVertices} stations et ${graphRERA.numEdges} connexions.")
+
+      println("\n--- Exemple de navigation (Triplets) ---")
+      graphRERA.triplets.take(10).foreach { t =>
+        println(s"${t.srcAttr} -> ${t.dstAttr}")
+      }
 
 
 
@@ -342,65 +371,6 @@ object DataReader {
     dfResultat
   }
 
-
-  def calculerIndicateurPondere(df: DataFrame): DataFrame = {
-
-    // --- 1. CONFIGURATION DES SEUILS (Référentiels "Mauvais") ---
-    // Valeurs utilisées pour diviser la mesure. Si Valeur = Seuil, Score = 1.0.
-    val refNO2 = 200.0    // Seuil horaire OMS
-    val refPM10 = 50.0    // Seuil journalier UE
-    val refPM2_5 = 25.0   // Seuil OMS (le plus strict)
-    val refNO = 400.0     // Indicatif (tolérance haute)
-    val refCO2 = 1200.0   // Seuil de confinement élevé (air vicié)
-
-    // Pour la météo : Ecart maximal toléré par rapport à l'idéal avant d'avoir un score de 1.0
-    val maxEcartTemp = 15.0 // Si on s'éloigne de 15°C de l'idéal (donc <5°C ou >35°C), score = 1
-    val maxEcartHumi = 40.0 // Si on s'éloigne de 40% (donc <10% ou >90%), score = 1
-
-    // --- 2. CONFIGURATION DES POIDS (Importance relative) ---
-    // Total = 1.0
-    val w_PM2_5 = 0.35 // Très toxique
-    val w_NO2   = 0.20 // Toxique
-    val w_PM10  = 0.15 // Particules
-    val w_NO    = 0.10 // Precurseur
-    val w_CO2   = 0.10 // Confinement
-    val w_TEMP  = 0.05 // Inconfort
-    val w_HUMI  = 0.05 // Inconfort
-
-    // --- 3. NORMALISATION (Score de 0 à 1 par colonne) ---
-
-    // A. Polluants : Valeur / Référence
-    // On utilise coalesce(..., 0) pour gérer les nulls (si capteur HS, on compte 0 pollution pour ce capteur)
-    val scNO2 = coalesce(col("NO2"), lit(0)) / refNO2
-    val scPM10 = coalesce(col("PM10"), lit(0)) / refPM10
-    val scPM2_5 = coalesce(col("PM2_5"), lit(0)) / refPM2_5
-    val scNO = coalesce(col("NO"), lit(0)) / refNO
-
-    // B. CO2 : On enlève le bruit de fond extérieur (~400 ppm) pour ne noter que l'ajout
-    // Formule : (CO2 - 400) / (1200 - 400). Borné à 0 min.
-    val co2Net = when((coalesce(col("CO2"), lit(400)) - 400) < 0, 0).otherwise(coalesce(col("CO2"), lit(400)) - 400)
-    val scCO2 = co2Net / (refCO2 - 400)
-
-    // C. Météo : Distance de l'idéal (20°C et 50%)
-    // Score = |Valeur - Idéal| / EcartMax
-    val distTemp = abs(coalesce(col("TEMP"), lit(20)) - 20) / maxEcartTemp
-    val distHumi = abs(coalesce(col("HUMI"), lit(50)) - 50) / maxEcartHumi
-
-    // --- 4. CALCUL DE L'INDICE PONDÉRÉ ---
-    val indicateur = (
-      (scPM2_5 * w_PM2_5) +
-        (scNO2   * w_NO2) +
-        (scPM10  * w_PM10) +
-        (scNO    * w_NO) +
-        (scCO2   * w_CO2) +
-        (distTemp * w_TEMP) +
-        (distHumi * w_HUMI)
-      )
-
-    // --- 5. RESULTAT ---
-    df.withColumn("Indicateur_Pollution_Global", indicateur)
-  }
-
   def calculerIndicateurDynamique(df: DataFrame): DataFrame = {
 
     // 1. Définition de la configuration idéale (Si tout est présent)
@@ -487,113 +457,6 @@ object DataReader {
 
 
 
-  /**
-   * Construit le Graphe orienté du RER A et injecte les données de pollution.
-   * @param dfPollution Le DataFrame contenant "nom_de_la_station" et "Indicateur_Synthetique"
-   * @param spark La session Spark active (implicite)
-   * @return Un objet GraphX où les sommets contiennent (NomStation, ScorePollution)
-   */
-
-  def construireGrapheRERA(dfPollution: DataFrame)(implicit spark: SparkSession): Graph[(String, Double), String] = {
-
-    import spark.implicits._
-
-    // --- 1. DÉFINITION DE LA TOPOLOGIE (Séquencement) ---
-    // On définit l'ordre des stations pour chaque branche
-    val dataRER = Seq(
-      ("RER A", "Nanterre-Préfecture", 1, "CENTRE"),
-      ("RER A", "La Défense", 2, "CENTRE"),
-      ("RER A", "Charles de Gaulle - Etoile", 3, "CENTRE"),
-      ("RER A", "Auber", 4, "CENTRE"),
-      ("RER A", "Châtelet les Halles", 5, "CENTRE"),
-      ("RER A", "Gare de Lyon", 6, "CENTRE"),
-      ("RER A", "Nation", 7, "CENTRE"),
-      ("RER A", "Vincennes", 8, "CENTRE"),
-      // Branche A1 (St Germain)
-      ("RER A", "Saint-Germain-en-Laye", 1, "BRANCHE_A1"),
-      ("RER A", "Le Vésinet - Le Pecq", 2, "BRANCHE_A1"),
-      ("RER A", "Le Vésinet-Centre", 3, "BRANCHE_A1"),
-      ("RER A", "Chatou-Croissy", 4, "BRANCHE_A1"),
-      ("RER A", "Rueil-Malmaison", 5, "BRANCHE_A1"),
-      ("RER A", "Nanterre-Ville", 6, "BRANCHE_A1"),
-      ("RER A", "Nanterre-Université", 7, "BRANCHE_A1"),
-      ("RER A", "Nanterre-Préfecture", 8, "BRANCHE_A1"), // Jonction
-      // Branche A3 (Cergy / Poissy simplifiée)
-      ("RER A", "Cergy-Le Haut", 1, "BRANCHE_A3"),
-      ("RER A", "Cergy-Saint-Christophe", 2, "BRANCHE_A3"),
-      ("RER A", "Cergy-Préfecture", 3, "BRANCHE_A3"),
-      ("RER A", "Neuville-Université", 4, "BRANCHE_A3"),
-      ("RER A", "Conflans-Fin-d'Oise", 5, "BRANCHE_A3"),
-      ("RER A", "Achères-Ville", 6, "BRANCHE_A3"),
-      ("RER A", "Maisons-Laffitte", 7, "BRANCHE_A3"),
-      ("RER A", "Sartrouville", 8, "BRANCHE_A3"),
-      ("RER A", "Houilles-Carrières-sur-Seine", 9, "BRANCHE_A3"),
-      ("RER A", "Nanterre-Préfecture", 10, "BRANCHE_A3"), // Jonction
-      // Branche A2 (Boissy)
-      ("RER A", "Vincennes", 1, "BRANCHE_A2"), // Jonction
-      ("RER A", "Fontenay-sous-Bois", 2, "BRANCHE_A2"),
-      ("RER A", "Nogent-sur-Marne", 3, "BRANCHE_A2"),
-      ("RER A", "Joinville-le-Pont", 4, "BRANCHE_A2"),
-      ("RER A", "Saint-Maur - Créteil", 5, "BRANCHE_A2"),
-      ("RER A", "Le Parc de Saint-Maur", 6, "BRANCHE_A2"),
-      ("RER A", "Champigny", 7, "BRANCHE_A2"),
-      ("RER A", "La Varenne - Chennevières", 8, "BRANCHE_A2"),
-      ("RER A", "Sucy - Bonneuil", 9, "BRANCHE_A2"),
-      ("RER A", "Boissy-Saint-Léger", 10, "BRANCHE_A2"),
-      // Branche A4 (Marne-la-Vallée)
-      ("RER A", "Vincennes", 1, "BRANCHE_A4"), // Jonction
-      ("RER A", "Val de Fontenay", 2, "BRANCHE_A4"),
-      ("RER A", "Neuilly-Plaisance", 3, "BRANCHE_A4"),
-      ("RER A", "Bry-sur-Marne", 4, "BRANCHE_A4"),
-      ("RER A", "Noisy-le-Grand - Mont d'Est", 5, "BRANCHE_A4"),
-      ("RER A", "Noisy - Champs", 6, "BRANCHE_A4"),
-      ("RER A", "Noisiel", 7, "BRANCHE_A4"),
-      ("RER A", "Lognes", 8, "BRANCHE_A4"),
-      ("RER A", "Torcy", 9, "BRANCHE_A4"),
-      ("RER A", "Bussy-Saint-Georges", 10, "BRANCHE_A4"),
-      ("RER A", "Val d'Europe", 11, "BRANCHE_A4"),
-      ("RER A", "Marne-la-Vallée - Chessy", 12, "BRANCHE_A4")
-    )
-
-    val dfTopology = spark.createDataFrame(dataRER).toDF("ligne", "nom_station", "ordre", "segment")
-
-    // Helper pour l'ID GraphX
-    def hashId(str: String): Long = str.hashCode.toLong
-
-    // --- 2. CONSTRUCTION DES LIENS (EDGES) ---
-    val windowSpec = Window.partitionBy("segment").orderBy("ordre")
-
-    val edgesRDD: RDD[Edge[String]] = dfTopology
-      .withColumn("station_suivante", lead("nom_station", 1).over(windowSpec))
-      .filter(col("station_suivante").isNotNull)
-      .rdd
-      .map { row =>
-        val src = row.getAs[String]("nom_station")
-        val dst = row.getAs[String]("station_suivante")
-        Edge(hashId(src), hashId(dst), "suivante")
-      }
-
-    // --- 3. CONSTRUCTION DES NOEUDS (VERTICES) avec POLLUTION ---
-    val uniqueStations = dfTopology.select("nom_station").distinct()
-
-    // Jointure avec les données de pollution fournies
-    val verticesRDD: RDD[(VertexId, (String, Double))] = uniqueStations
-      .join(dfPollution, uniqueStations("nom_station") === dfPollution("nom_de_la_station"), "left_outer")
-      .select(
-        col("nom_station"),
-        // Si on n'a pas de donnée pollution pour une station, on met 0.0 par défaut
-        coalesce(col("Indicateur_Synthetique"), lit(0.0)).as("score_pollution")
-      )
-      .rdd
-      .map { row =>
-        val name = row.getAs[String]("nom_station")
-        val score = row.getAs[Double]("score_pollution")
-        (hashId(name), (name, score))
-      }
-
-    // --- 4. CRÉATION DU GRAPHE ---
-    Graph(verticesRDD, edgesRDD)
-  }
 
 }
 
