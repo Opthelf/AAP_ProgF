@@ -2,7 +2,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.Column
-case class Mesure(Prénom: String,Nom: String)
+import org.apache.spark.sql.functions.{col, min, max, lit}
 
 object DataReader {
 
@@ -73,14 +73,28 @@ object DataReader {
       //val idf_anaylze = analyzePollution(idf_tf2)
 //      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
       //idf_anaylze.show()
-      val auber = analyzeDailyPeak(auber_tf, "PM10")
-      auber.show(24)
       val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
-      val auber_c = analyzeDailyPeak(auber_clean,"PM10")
-      auber_c.show(24)
+
 
       //Période critique & Pics horaires
       // Liste des colonnes à analyser (on exclut le timestamp)
+      // Utilisation
+      val auber_IG = calculerIndicateurPondere(auber_clean)
+      val df_final = analyzeDailyPeak(auber_IG,"Indicateur_Pollution_Global")
+      val dfDebug = auber_IG.withColumn("heure", hour(col("DATE/HEURE")))
+
+      // On regarde la moyenne de CHAQUE sous-indice par heure
+      dfDebug.groupBy("heure")
+        .agg(
+          avg("Indicateur_Pollution_Global").as("Global"),
+          avg("NO2").as("Score_NO2"),     // Est-ce le diesel des travaux ?
+          avg("PM10").as("Score_PM10"),   // Est-ce la poussière des travaux ?
+          avg("CO2").as("Score_CO2"),     // Est-ce l'arrêt de la ventilation ?
+          count("*").as("Nb_Mesures")         // Y a-t-il très peu de données à 3h ?
+        )
+        .orderBy("heure")
+        .show(24)
+
 
 
     }catch{
@@ -255,4 +269,66 @@ object DataReader {
 
     return dfResultat
   }
+
+
+  def calculerIndicateurPondere(df: DataFrame): DataFrame = {
+
+    // --- 1. CONFIGURATION DES SEUILS (Référentiels "Mauvais") ---
+    // Valeurs utilisées pour diviser la mesure. Si Valeur = Seuil, Score = 1.0.
+    val refNO2 = 200.0    // Seuil horaire OMS
+    val refPM10 = 50.0    // Seuil journalier UE
+    val refPM2_5 = 25.0   // Seuil OMS (le plus strict)
+    val refNO = 400.0     // Indicatif (tolérance haute)
+    val refCO2 = 1200.0   // Seuil de confinement élevé (air vicié)
+
+    // Pour la météo : Ecart maximal toléré par rapport à l'idéal avant d'avoir un score de 1.0
+    val maxEcartTemp = 15.0 // Si on s'éloigne de 15°C de l'idéal (donc <5°C ou >35°C), score = 1
+    val maxEcartHumi = 40.0 // Si on s'éloigne de 40% (donc <10% ou >90%), score = 1
+
+    // --- 2. CONFIGURATION DES POIDS (Importance relative) ---
+    // Total = 1.0
+    val w_PM2_5 = 0.35 // Très toxique
+    val w_NO2   = 0.20 // Toxique
+    val w_PM10  = 0.15 // Particules
+    val w_NO    = 0.10 // Precurseur
+    val w_CO2   = 0.10 // Confinement
+    val w_TEMP  = 0.05 // Inconfort
+    val w_HUMI  = 0.05 // Inconfort
+
+    // --- 3. NORMALISATION (Score de 0 à 1 par colonne) ---
+
+    // A. Polluants : Valeur / Référence
+    // On utilise coalesce(..., 0) pour gérer les nulls (si capteur HS, on compte 0 pollution pour ce capteur)
+    val scNO2 = coalesce(col("NO2"), lit(0)) / refNO2
+    val scPM10 = coalesce(col("PM10"), lit(0)) / refPM10
+    val scPM2_5 = coalesce(col("PM2_5"), lit(0)) / refPM2_5
+    val scNO = coalesce(col("NO"), lit(0)) / refNO
+
+    // B. CO2 : On enlève le bruit de fond extérieur (~400 ppm) pour ne noter que l'ajout
+    // Formule : (CO2 - 400) / (1200 - 400). Borné à 0 min.
+    val co2Net = when((coalesce(col("CO2"), lit(400)) - 400) < 0, 0).otherwise(coalesce(col("CO2"), lit(400)) - 400)
+    val scCO2 = co2Net / (refCO2 - 400)
+
+    // C. Météo : Distance de l'idéal (20°C et 50%)
+    // Score = |Valeur - Idéal| / EcartMax
+    val distTemp = abs(coalesce(col("TEMP"), lit(20)) - 20) / maxEcartTemp
+    val distHumi = abs(coalesce(col("HUMI"), lit(50)) - 50) / maxEcartHumi
+
+    // --- 4. CALCUL DE L'INDICE PONDÉRÉ ---
+    val indicateur = (
+      (scPM2_5 * w_PM2_5) +
+        (scNO2   * w_NO2) +
+        (scPM10  * w_PM10) +
+        (scNO    * w_NO) +
+        (scCO2   * w_CO2) +
+        (distTemp * w_TEMP) +
+        (distHumi * w_HUMI)
+      )
+
+    // --- 5. RESULTAT ---
+    df.withColumn("Indicateur_Pollution_Global", indicateur)
+  }
+
+
 }
+
