@@ -10,10 +10,10 @@ import org.apache.spark.rdd.RDD
 object DataReader {
 
   def main(args: Array[String]): Unit = {
-//    val spark = SparkSession.builder()
-//      .appName("CSV Reader")
-//      .master("local")
-//      .getOrCreate()
+    val spark = SparkSession.builder()
+      .appName("CSV Reader")
+      .master("local")
+      .getOrCreate()
 
     spark.sparkContext.setLogLevel("OFF") //Enlève les warnings et une partie des INFO
     val auber_rer= "src/Data/auber.csv"
@@ -166,14 +166,13 @@ object DataReader {
       // Liste de tous les tronçons
       val tousLesTroncons = Seq(brancheA1, brancheA3, brancheA5, tronconCentral, brancheA2, brancheA4)
 
-      def getId(nom: String): Long = nom.hashCode.toLong
 
       // --- 2. Création des ARÊTES (Edges) ---
       // On prend chaque liste et on connecte l'élément N à N+1
       val edgesList = tousLesTroncons.flatMap { ligne =>
         // 'sliding(2)' crée des paires glissantes : (Station1, Station2), (Station2, Station3)...
         ligne.sliding(2).map { case Seq(src, dst) =>
-          Edge(getId(src), getId(dst), "suivante")
+          Edge(hashId(src), hashId(dst), "suivante")
         }
       }
       val edgesRDD: RDD[Edge[String]] = spark.sparkContext.parallelize(edgesList)
@@ -181,7 +180,7 @@ object DataReader {
       // --- 3. Création des SOMMETS (Vertices) ---
       // On prend tous les noms de stations, on dédoublonne (ex: Vincennes apparait 3 fois), et on crée les sommets
       val verticesList = tousLesTroncons.flatten.distinct.map { nom =>
-        (getId(nom), nom) // (ID, Propriété) -> Ici la propriété est juste le Nom pour l'instant
+        (hashId(nom), nom) // (ID, Propriété) -> Ici la propriété est juste le Nom pour l'instant
       }
       val verticesRDD: RDD[(Long, String)] = spark.sparkContext.parallelize(verticesList)
 
@@ -192,7 +191,7 @@ object DataReader {
       println(s"Le réseau RER A a été modélisé avec ${graphRERA.numVertices} stations et ${graphRERA.numEdges} connexions.")
 
       println("\n--- Exemple de navigation (Triplets) ---")
-      graphRERA.triplets.take(10).foreach { t =>
+      graphRERA.triplets.take(25).foreach { t =>
         println(s"${t.srcAttr} -> ${t.dstAttr}")
       }
 
@@ -455,8 +454,12 @@ object DataReader {
     df.withColumn("Indicateur_Pollution_Global", indicateurFinal)
   }
 
+  def hashId(str: String): Long = {
+    if (str == null) 0L // Sécurité anti-crash
+    else str.hashCode.toLong
+  }
 
-
+  def getId(nom: String): Long = nom.hashCode.toLong
 
 }
 
