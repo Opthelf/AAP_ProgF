@@ -14,7 +14,7 @@ object DataReader {
   val franklin_metro_path = "src/Data/station-franklin-d-roosevelt-2021-maintenant.csv"
   val nation_rer_path = "src/Data/station-nation-rer-a0.csv"
   val saint_germain_metro_path = "src/Data/station-saint-germain-des-pres-de-2024-a-nos-jours-.csv"
-  val idf_path = "src/Data/idf_nettoye/part-00000-48cf0098-677d-4a0d-8f77-74207e9c408e-c000.csv"
+  val idf_path = "src/Data/idf_nettoye/part-00000-38d78d7a-1ef9-40be-8a0b-080b538587c6-c000.csv"
 
   lazy val spark: SparkSession = {
     // 1. Création dans une variable temporaire
@@ -188,11 +188,11 @@ object DataReader {
 //        .drop("incertitude") //pour simplifier le problème
 //        .drop("duree_des_mesures")
 //
-//      //qualitative -> quantitative
+////      //qualitative -> quantitative
 //      val idf_tf2 = encodePollutionLevels(idf_tf1)
 //        .drop("niveau")
 //        .drop("niveau_de_pollution_aux_particules")
-
+//
 //      idf_tf2
 //        .coalesce(1)
 //        .write
@@ -206,8 +206,8 @@ object DataReader {
 
 
 //      val idf_anaylze = analyzePollution(idf_df)
-////      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
-//      //idf_anaylze.orderBy("Ligne").show(25)
+//      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
+//      idf_anaylze.orderBy("Ligne").show(25)
 //      val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
 //      val chatelet_clean = remplacerOutliersParNull(chatelet_r_tf,Array("PM10","TEMP","HUMI"))
 //      val nation_clean = remplacerOutliersParNull(nation_tf,Array("PM10","PM2_5","TEMP","HUMI"))
@@ -216,21 +216,6 @@ object DataReader {
 //
 
 
-      //Période critique & Pics horaires
-      // Utilisation
-//      val auber_IG = calculerIndicateurDynamique(auber_clean)
-//      val chatelet_IG = calculerIndicateurDynamique(chatelet_clean)
-//      val nation_IG = calculerIndicateurDynamique(nation_clean)
-//      val franklin_IG = calculerIndicateurDynamique(franklin_clean)
-//      val saint_germain_IG = calculerIndicateurDynamique(saint_germain_clean)
-//
-//      val auber_final = analyzeDailyPeak(auber_IG, index)
-//      val chatelet_final = analyzeDailyPeak(chatelet_IG, index)
-//      val nation_final = analyzeDailyPeak(chatelet_IG, index)
-//      val franklin_final = analyzeDailyPeak(franklin_IG, index)
-//      val saint_germain_final = analyzeDailyPeak(saint_germain_IG, index)
-
-//
 
 
 
@@ -315,12 +300,12 @@ object DataReader {
       // On met en majuscules une seule fois pour la robustesse des comparaisons
       val upperCol = upper(targetCol)
 
-      when(upperCol.contains("ÉLEVÉE"), 4) // Cherche 'ÉLEVÉE' dans n'importe quelle longueur de chaîne
-        .when(upperCol.contains("MOYENNE"), 3) // Cherche 'MOYENNE' dans la chaîne
-        .when(upperCol.contains("FAIBLE"), 2) // Cherche 'FAIBLE'
+      when(upperCol.contains("ÉLEVÉE"), 1) // Cherche 'ÉLEVÉE' dans n'importe quelle longueur de chaîne
+        .when(upperCol.contains("MOYENNE"), 0.75) // Cherche 'MOYENNE' dans la chaîne
+        .when(upperCol.contains("FAIBLE"), 0.5) // Cherche 'FAIBLE'
 
         // IMPORTANT : On cherche AÉRIENNE ou AERIENNE (sans accent)
-        .when(upperCol.contains("AÉRIENNE") || upperCol.contains("AERIENNE"), 1)
+        .when(upperCol.contains("AÉRIENNE") || upperCol.contains("AERIENNE"), 0.25)
 
         // Gère les cas "PAS DE DONNÉES"
         .when(upperCol.contains("PAS DE DONNÉES") || upperCol.contains("PAS DE DONNEES"), lit(null).cast("int"))
