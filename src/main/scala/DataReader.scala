@@ -1,3 +1,4 @@
+package projet
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -8,14 +9,139 @@ import org.apache.spark.sql.expressions.Window
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 object DataReader {
+  val auber_path= "src/Data/auber.csv"
+  val chatelet_rer_path = "src/Data/station-chatelet-rer-a0.csv"
+  val franklin_metro_path = "src/Data/station-franklin-d-roosevelt-2021-maintenant.csv"
+  val nation_rer_path = "src/Data/station-nation-rer-a0.csv"
+  val saint_germain_metro_path = "src/Data/station-saint-germain-des-pres-de-2024-a-nos-jours-.csv"
+  val idf_path = "src/Data/idf_nettoye/part-00000-48cf0098-677d-4a0d-8f77-74207e9c408e-c000.csv"
 
-  def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder()
+  lazy val spark: SparkSession = {
+    // 1. Création dans une variable temporaire
+    val session = SparkSession.builder()
       .appName("CSV Reader")
-      .master("local")
+      .master("local[*]") // [*] est mieux : utilise tous les coeurs du CPU
+      // On garde les configs de sécurité au cas où (ne fait pas de mal)
+      .config("spark.driver.extraJavaOptions", "--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
       .getOrCreate()
 
-    spark.sparkContext.setLogLevel("OFF") //Enlève les warnings et une partie des INFO
+    // 2. Configuration sur la variable temporaire
+    session.sparkContext.setLogLevel("OFF")
+
+    // 3. IMPORTANT : On retourne l'objet à la fin pour qu'il soit affecté à 'spark'
+    session
+  }
+  val sep = ";"
+  val ignore = Seq("DATE/HEURE")
+  val ignore_minuscule = ignore.map(_.toLowerCase())
+  val doublon = true
+  val index = "Indicateur_Pollution_Global"
+
+  lazy val auberdf : DataFrame = {
+    println("Chargement d'Auber RER")
+    // Étape 1 : Lecture
+    val dfRaw = reader(spark, auber_path, doublon, sep)
+
+    // Étape 2 : Transformation
+    val dfTf = dataFrameTransform(dfRaw, ignore)
+
+    // Étape 3 : Nettoyage (Outliers)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
+
+    // Étape 4 : Calcul Indicateur
+    val dfIndic = calculerIndicateurDynamique(dfClean)
+
+    // Étape 5 : Analyse (Pic journalier) - C'est le résultat final retourné
+    analyzeDailyPeak(dfIndic, index)
+
+  }
+  lazy val chateletdf : DataFrame = {
+    println("Chargement de Chatelet RER")
+    // Étape 1 : Lecture
+    val dfRaw = reader(spark, chatelet_rer_path, doublon, sep)
+
+    // Étape 2 : Transformation
+    val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
+
+    // Étape 3 : Nettoyage (Outliers)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","TEMP","HUMI"))
+
+    // Étape 4 : Calcul Indicateur
+    val dfIndic = calculerIndicateurDynamique(dfClean)
+
+    // Étape 5 : Analyse (Pic journalier) - C'est le résultat final retourné
+    analyzeDailyPeak(dfIndic, index)
+
+  }
+  lazy val nationdf : DataFrame = {
+    println("Chargement de Nation RER")
+    // Étape 1 : Lecture
+    val dfRaw = reader(spark, nation_rer_path, doublon, sep)
+
+    // Étape 2 : Transformation
+    val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
+
+    // Étape 3 : Nettoyage (Outliers)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","PM2_5","TEMP","HUMI"))
+
+    // Étape 4 : Calcul Indicateur
+    val dfIndic = calculerIndicateurDynamique(dfClean)
+
+    // Étape 5 : Analyse (Pic journalier) - C'est le résultat final retourné
+    analyzeDailyPeak(dfIndic, index)
+
+  }
+  lazy val saintgermaindf : DataFrame = {
+    println("Chargement de Saint Germain des Près Métro")
+    // Étape 1 : Lecture
+    val dfRaw = reader(spark, saint_germain_metro_path, doublon, sep)
+
+    // Étape 2 : Transformation
+    val dfTf = dataFrameTransform(dfRaw, ignore)
+
+    // Étape 3 : Nettoyage (Outliers)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","TEMP","HUMI"))
+
+    // Étape 4 : Calcul Indicateur
+    val dfIndic = calculerIndicateurDynamique(dfClean)
+
+    // Étape 5 : Analyse (Pic journalier) - C'est le résultat final retourné
+    analyzeDailyPeak(dfIndic, index)
+
+  }
+  lazy val franklindf : DataFrame = {
+    println("Chargement de Franklin-D-Roosevelt Métro")
+    // Étape 1 : Lecture
+    val dfRaw = reader(spark, franklin_metro_path, doublon, sep)
+
+    // Étape 2 : Transformation
+    val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
+
+    // Étape 3 : Nettoyage (Outliers)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("NO","NO2","PM10","CO2","TEMP","HUMI"))
+
+    // Étape 4 : Calcul Indicateur
+    val dfIndic = calculerIndicateurDynamique(dfClean)
+
+    // Étape 5 : Analyse (Pic journalier) - C'est le résultat final retourné
+    analyzeDailyPeak(dfIndic, index)
+
+  }
+  lazy val reseauidf_df : DataFrame = {
+    println("Chargement de Franklin-D-Roosevelt Métro")
+    // Étape 1 : Lecture
+    val dfRaw = reader(spark,idf_path, doublon, sep)
+    dfRaw
+
+  }
+
+
+
+
+
+  def main(args: Array[String]): Unit = {
+
+
     val auber_rer= "src/Data/auber.csv"
     val chatelet_metro = "src/Data/station-chatelet-2021-maintenant.csv"
     val chatelet_rer = "src/Data/station-chatelet-rer-a0.csv"
@@ -23,8 +149,7 @@ object DataReader {
     val nation_rer = "src/Data/station-nation-rer-a0.csv"
     val saint_germain_metro = "src/Data/station-saint-germain-des-pres-de-2024-a-nos-jours-.csv"
 
-    val idf = "src/Data/idf_nettoye/part-00000-48cf0098-677d-4a0d-8f77-74207e9c408e-c000.csv" //À transformer
-    val doublon = true
+     //À transformer
 
     try{
       //Lecture
@@ -32,22 +157,22 @@ object DataReader {
       val sep = ";"
       val ignore = Seq("DATE/HEURE")
       val ignore_minuscule = ignore.map(_.toLowerCase())
-      val auberdf = reader(spark, auber_rer, doublon, sep)
+
       val chatelet_metro_df = reader(spark, chatelet_metro, doublon, sep)
       val chatelet_rer_df = reader(spark, chatelet_rer, doublon, sep)
       val franklin_metro_df = reader(spark, franklin_metro, doublon, sep)
       val nation_rer_df = reader(spark, nation_rer, doublon, sep)
       val saint_germain_metro_df = reader(spark, saint_germain_metro, doublon, sep)
-      val idf_df = reader(spark, idf, doublon, sep)
+      val idf_df = reader(spark, idf_path, doublon, sep)
+      val idf_final = analyzePollution(idf_df)
+      idf_final.show()
 
       //Transformation
-      val auber_tf = dataFrameTransform(auberdf, ignore)
       val chatelet_m_tf = dataFrameTransform(chatelet_metro_df, ignore)
       val chatelet_r_tf = dataFrameTransform(chatelet_rer_df, ignore_minuscule)
       val fk_tf = dataFrameTransform(franklin_metro_df, ignore_minuscule)
       val nation_tf = dataFrameTransform(nation_rer_df, ignore_minuscule)
       val sg_tf = dataFrameTransform(saint_germain_metro_df,ignore)
-
       //Transformation Île de France df
       // idf ne possède pas de dates pour ces données on transforme différemment le dataframe
 //      val idf_tf1 = idf_df.drop("point_geo")
@@ -99,101 +224,17 @@ object DataReader {
 //      val franklin_IG = calculerIndicateurDynamique(franklin_clean)
 //      val saint_germain_IG = calculerIndicateurDynamique(saint_germain_clean)
 //
-//      val index = "Indicateur_Pollution_Global"
 //      val auber_final = analyzeDailyPeak(auber_IG, index)
 //      val chatelet_final = analyzeDailyPeak(chatelet_IG, index)
 //      val nation_final = analyzeDailyPeak(chatelet_IG, index)
 //      val franklin_final = analyzeDailyPeak(franklin_IG, index)
 //      val saint_germain_final = analyzeDailyPeak(saint_germain_IG, index)
 
-//      println("Analyse auber rer")
-      //auber_final.show(24)
-//      println("Analyse chatelet rer")
-//      chatelet_final.show(24)
-//      println("Analyse nation rer")
-//      nation_final.show(24)
-//      println("Analyse franklin metro")
-//      franklin_final.show(24)
-//      println("Analyse saint_germain metro")
-//      saint_germain_final.show(24)
-
-//      // 1. On transforme le tableau de 24h en une seule ligne avec le nom
-//      val dfAuberReady = auber_final
-//        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique")) // Moyenne des 24h
-//        .withColumn("nom_de_la_station", lit("Auber")) // On remet le nom manuellement
 //
-//      val dfChateletReady = chatelet_final
-//        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
-//        .withColumn("nom_de_la_station", lit("Châtelet les Halles"))
-//
-//      val dfNationReady = nation_final
-//        .agg(avg("avg(Indicateur_Pollution_Global)").as("Indicateur_Synthetique"))
-//        .withColumn("nom_de_la_station", lit("Nation"))
-//
-//      // 2. On fusionne
-//      val dfPatchwork = dfAuberReady.union(dfChateletReady).union(dfNationReady)
-//      dfPatchwork.show()
-
-
-      //val dfDebug = auber_IG.withColumn("heure", hour(col("DATE/HEURE")))
-      // On regarde la moyenne de CHAQUE sous-indice par heure
-//      dfDebug.groupBy("heure")
-//        .agg(
-//          avg("Indicateur_Pollution_Global").as("Global"),
-//
-//          avg("NO2").as("Score_NO2"),     // Est-ce le diesel des travaux ?
-//          avg("PM10").as("Score_PM10"),   // Est-ce la poussière des travaux ?
-//          avg("CO2").as("Score_CO2"),     // Est-ce l'arrêt de la ventilation ?
-//          avg("PM2_5").as("Score_PM2.5"),
-//          count("*").as("Nb_Mesures")         // Y a-t-il très peu de données à 3h ?
-//        )
-//        .orderBy("heure")
-//        .show(24)
 
 
 
-//GraphX
-// 1. Définition manuelle des séquences de stations (L'ordre est crucial)
-      val brancheA1 = Seq("Saint-Germain-en-Laye", "Le Vésinet - Le Pecq", "Le Vésinet-Centre", "Chatou-Croissy", "Rueil-Malmaison", "Nanterre-Ville", "Nanterre-Université", "Nanterre-Préfecture")
-      val brancheA3 = Seq("Cergy-Le Haut", "Cergy-Saint-Christophe", "Cergy-Préfecture", "Neuville-Université", "Conflans-Fin-d'Oise", "Achères-Ville", "Maisons-Laffitte", "Sartrouville", "Houilles-Carrières-sur-Seine", "Nanterre-Préfecture")
-      val brancheA5 = Seq("Poissy", "Achères-Grand-Cormier", "Maisons-Laffitte") // Rejoint la A3
 
-      val tronconCentral = Seq("Nanterre-Préfecture", "La Défense", "Charles de Gaulle - Etoile", "Auber", "Châtelet les Halles", "Gare de Lyon", "Nation", "Vincennes")
-
-      val brancheA2 = Seq("Vincennes", "Fontenay-sous-Bois", "Nogent-sur-Marne", "Joinville-le-Pont", "Saint-Maur - Créteil", "Le Parc de Saint-Maur", "Champigny", "La Varenne - Chennevières", "Sucy - Bonneuil", "Boissy-Saint-Léger")
-      val brancheA4 = Seq("Vincennes", "Val de Fontenay", "Neuilly-Plaisance", "Bry-sur-Marne", "Noisy-le-Grand - Mont d'Est", "Noisy - Champs", "Noisiel", "Lognes", "Torcy", "Bussy-Saint-Georges", "Val d'Europe", "Marne-la-Vallée - Chessy")
-
-      // Liste de tous les tronçons
-      val tousLesTroncons = Seq(brancheA1, brancheA3, brancheA5, tronconCentral, brancheA2, brancheA4)
-
-
-      // --- 2. Création des ARÊTES (Edges) ---
-      // On prend chaque liste et on connecte l'élément N à N+1
-      val edgesList = tousLesTroncons.flatMap { ligne =>
-        // 'sliding(2)' crée des paires glissantes : (Station1, Station2), (Station2, Station3)...
-        ligne.sliding(2).map { case Seq(src, dst) =>
-          Edge(hashId(src), hashId(dst), "suivante")
-        }
-      }
-      val edgesRDD: RDD[Edge[String]] = spark.sparkContext.parallelize(edgesList)
-
-      // --- 3. Création des SOMMETS (Vertices) ---
-      // On prend tous les noms de stations, on dédoublonne (ex: Vincennes apparait 3 fois), et on crée les sommets
-      val verticesList = tousLesTroncons.flatten.distinct.map { nom =>
-        (hashId(nom), nom) // (ID, Propriété) -> Ici la propriété est juste le Nom pour l'instant
-      }
-      val verticesRDD: RDD[(Long, String)] = spark.sparkContext.parallelize(verticesList)
-
-      // --- 4. Création du Graphe ---
-      val graphRERA = Graph(verticesRDD, edgesRDD)
-
-      //--- 5. Vérification ---
-      println(s"Le réseau RER A a été modélisé avec ${graphRERA.numVertices} stations et ${graphRERA.numEdges} connexions.")
-
-      println("\n--- Exemple de navigation (Triplets) ---")
-      graphRERA.triplets.take(25).foreach { t =>
-        println(s"${t.srcAttr} -> ${t.dstAttr}")
-      }
 
 
 
@@ -362,10 +403,6 @@ object DataReader {
     }
 
     // 4. Rapport
-    println("--- Bornes appliquées ---")
-    boundsMap.foreach { case (k, v) =>
-      println(f"$k%s : [${v._1}%.2f, ${v._2}%.2f]")
-    }
 
     dfResultat
   }
@@ -405,7 +442,7 @@ object DataReader {
     // Sécurité : Si aucune colonne n'est trouvée (fichier vide ou erreurs noms), on renvoie le DF tel quel
     if (sommePoids == 0.0) return df.withColumn("Indicateur_Synthetique", lit(0.0))
 
-    println(s"Colonnes détectées. Somme des poids bruts : $sommePoids. Recalcul des poids en cours...")
+//    println(s"Colonnes détectées. Somme des poids bruts : $sommePoids. Recalcul des poids en cours...")
 
     // 4. Construction de la liste des expressions pondérées
     var expressionsScores: List[Column] = List()
@@ -454,12 +491,8 @@ object DataReader {
     df.withColumn("Indicateur_Pollution_Global", indicateurFinal)
   }
 
-  def hashId(str: String): Long = {
-    if (str == null) 0L // Sécurité anti-crash
-    else str.hashCode.toLong
-  }
 
-  def getId(nom: String): Long = nom.hashCode.toLong
+
 
 }
 
