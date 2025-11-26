@@ -14,7 +14,7 @@ object DataReader {
   val franklin_metro_path = "src/Data/station-franklin-d-roosevelt-2021-maintenant.csv"
   val nation_rer_path = "src/Data/station-nation-rer-a0.csv"
   val saint_germain_metro_path = "src/Data/station-saint-germain-des-pres-de-2024-a-nos-jours-.csv"
-  val idf_path = "src/Data/idf_nettoye/part-00000-38d78d7a-1ef9-40be-8a0b-080b538587c6-c000.csv"
+  val idf_path = "src/Data/idf_nettoye/part-00000-7f64d0ed-e28c-494e-9bf4-13ed266ae0a0-c000.csv"
 
   lazy val spark: SparkSession = {
     // 1. Création dans une variable temporaire
@@ -168,13 +168,8 @@ object DataReader {
       idf_final.show()
 
       //Transformation
-      val chatelet_m_tf = dataFrameTransform(chatelet_metro_df, ignore)
-      val chatelet_r_tf = dataFrameTransform(chatelet_rer_df, ignore_minuscule)
-      val fk_tf = dataFrameTransform(franklin_metro_df, ignore_minuscule)
-      val nation_tf = dataFrameTransform(nation_rer_df, ignore_minuscule)
-      val sg_tf = dataFrameTransform(saint_germain_metro_df,ignore)
+
       //Transformation Île de France df
-      // idf ne possède pas de dates pour ces données on transforme différemment le dataframe
 //      val idf_tf1 = idf_df.drop("point_geo")
 //        .drop("mesures_d_amelioration_mises_en_place_ou_prevues") //on a déjà les colonnes long & lat
 //        .drop("recommandation_de_surveillance")
@@ -187,11 +182,14 @@ object DataReader {
 //        .drop("pollution_air")// la donnée est reportée dans niveau sans les incertitudes
 //        .drop("incertitude") //pour simplifier le problème
 //        .drop("duree_des_mesures")
+
 //
 ////      //qualitative -> quantitative
 //      val idf_tf2 = encodePollutionLevels(idf_tf1)
 //        .drop("niveau")
 //        .drop("niveau_de_pollution_aux_particules")
+//        .drop("pollution_particules")
+//        .drop("identifiant_station")
 //
 //      idf_tf2
 //        .coalesce(1)
@@ -334,7 +332,6 @@ object DataReader {
       .agg(
         // 2. Compter le nombre de stations dans ce groupe
         avg(col("pollution_air")).as("moyenne_pollution_air"),
-        avg(col("pollution_particules")).as("moyenne_pollution_particules"),
         count("*").as("total_stations_par_ligne")
       )
     dfStationsParNiveau

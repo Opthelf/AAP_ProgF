@@ -24,26 +24,48 @@ object OrdreLigne {
   lazy val rerD_Sud_Melun_Corbeil = Seq("Corbeil-Essonnes", "Essonnes - Robinson", "Villabé", "Le Plessis-Chenet", "Coudray-Montceaux", "Saint-Fargeau", "Ponthierry - Pringy", "Boissise-le-Roi", "Vosves", "Melun")
   lazy val rer_D = Seq(rerD_Nord_Creil, rerD_Centre, rerD_Sud_Melun_Combs, rerD_Sud_Plateau, rerD_Sud_Malsherbes, rerD_Sud_Melun_Corbeil)
 
-  lazy val rerE_Ouest = Seq("Nanterre-La-Folie", "La Défense", "Neuilly - Porte Maillot", "Haussmann - Saint-Lazare", "Magenta", "Rosa Parks")
-  lazy val rerE_Est_Chelles = Seq("Rosa Parks", "Pantin", "Noisy-le-Sec", "Bondy", "Le Raincy - Villemomble - Montfermeil", "Gagny", "Le Chénay - Gagny", "Chelles - Gournay")
-  lazy val rerE_Est_Tournan = Seq("Rosa Parks", "Pantin", "Noisy-le-Sec", "Rosny-Bois-Perrier", "Rosny-sous-Bois", "Val de Fontenay", "Nogent - Le Perreux", "Les Boullereaux - Champigny", "Villiers-sur-Marne - Le Plessis-Trévise", "Les Yvris - Noisy-le-Grand", "Emerainville - Pontault-Combault", "Roissy-en-Brie", "Ozoir-la-Ferrière", "Gretz-Armainvilliers", "Tournan")
+  lazy val rerE_Ouest = Seq("Nanterre-La-Folie",
+    "La Défense",
+    "Neuilly - Porte Maillot",
+    "Haussmann - Saint-Lazare",
+    "Magenta",
+    "Rosa Parks")
+  lazy val rerE_Est_Chelles = Seq("Rosa Parks",
+    "Pantin",
+    "Noisy-le-Sec",
+    "Bondy",
+    "Le Raincy - Villemomble - Montfermeil",
+    "Gagny",
+    "Le Chénay - Gagny",
+    "Chelles - Gournay")
+  lazy val rerE_Est_Tournan = Seq("Rosa Parks",
+    "Pantin",
+    "Noisy-le-Sec",
+    "Rosny-Bois-Perrier",
+    "Rosny-sous-Bois",
+    "Val de Fontenay",
+    "Nogent - Le Perreux",
+    "Les Boullereaux - Champigny",
+    "Villiers-sur-Marne - Le Plessis-Trévise",
+    "Les Yvris - Noisy-le-Grand",
+    "Emerainville - Pontault-Combault",
+    "Roissy-en-Brie",
+    "Ozoir-la-Ferrière",
+    "Gretz-Armainvilliers",
+    "Tournan")
   lazy val rer_E = Seq(rerE_Ouest, rerE_Est_Chelles, rerE_Est_Tournan)
 
-  val rerC_Troncon_Central = Seq(
-    "Champ de Mars Tour Eiffel",
+  val rerC_Troncon_Central = Seq("Champ de Mars Tour Eiffel",
     "Pont de l'Alma",
     "Invalides",
     "Musée d'Orsay",
     "Saint-Michel Notre-Dame",
-    "Gare d'Austerlitz"
-  )
-
+    "Gare d'Austerlitz")
   // --- BRANCHE NORD (C1 / C3) ---
   // Elle se divise en deux après Ermont-Eaubonne ou Montigny selon les missions,
   // mais physiquement la ligne part de Champ de Mars vers le Nord.
 
-  val rerC_Nord_Principal = Seq(
-    "Champ de Mars Tour Eiffel",
+  lazy val rerC_Nord_Principal = Seq("Champ de Mars Tour Eiffel",
     "Avenue du Président Kennedy",
     "Boulainvilliers",
     "Avenue Henri Martin",
@@ -56,112 +78,65 @@ object OrdreLigne {
     "Gennevilliers",
     "Epinay-sur-Seine",
     "Saint-Gratien",
-    "Ermont - Eaubonne"
-  )
-
-  val rerC_Nord_Pontoise = Seq(
-    "Ermont - Eaubonne",
+    "Ermont - Eaubonne")
+  lazy val rerC_Nord_Pontoise = Seq("Ermont - Eaubonne",
     "Cernay",
     "Franconville - Le Plessis-Bouchard",
     "Montigny - Beauchamp",
     "Pierrelaye",
     "Saint-Ouen-l'Aumône - Liesse",
     "Saint-Ouen-l'Aumône",
-    "Pontoise"
-  )
-
+    "Pontoise")
   // --- BRANCHE OUEST (C5 / C7) ---
   // Elle part de Champ de Mars vers Versailles Rive Gauche / St Quentin
-
-  val rerC_Ouest_Commun = Seq(
-    "Champ de Mars Tour Eiffel",
+  lazy val rerC_Ouest_Commun = Seq("Champ de Mars Tour Eiffel",
     "Javel",
     "Pont du Garigliano",
     "Issy Val de Seine",
     "Issy",
     "Meudon Val Fleury",
     "Chaville - Vélizy",
-    "Viroflay Rive Gauche"
-  )
-
+    "Viroflay Rive Gauche")
   // La fourche à Viroflay Rive Gauche
-  val rerC_Ouest_Chateau = Seq(
-    "Viroflay Rive Gauche",
+  lazy val rerC_Ouest_Chateau = Seq("Viroflay Rive Gauche",
     "Porchefontaine",
-    "Versailles Château Rive Gauche"
-  )
-
-  val rerC_Ouest_StQuentin = Seq(
-    "Viroflay Rive Gauche",
+    "Versailles Château Rive Gauche")
+  lazy val rerC_Ouest_StQuentin = Seq("Viroflay Rive Gauche",
     "Versailles Chantiers",
     "Saint-Cyr",
-    "Saint-Quentin-en-Yvelines"
-  )
-
+    "Saint-Quentin-en-Yvelines")
   // --- BRANCHE SUD (C2 / C4 / C6 / C8) ---
   // Elle part d'Austerlitz et descend vers le Sud.
-
-  val rerC_Sud_Commun = Seq(
-    "Gare d'Austerlitz",
+  lazy val rerC_Sud_Commun = Seq("Gare d'Austerlitz",
     "Bibliothèque François Mitterrand",
     "Ivry-sur-Seine",
     "Vitry-sur-Seine",
     "Les Ardoines",
-    "Choisy-le-Roi"
-  )
-
+    "Choisy-le-Roi")
   // Division à Choisy-le-Roi : Soit tout droit vers Juvisy, soit via Orly (Pont de Rungis)
-
-  val rerC_Sud_Direct = Seq(
-    "Choisy-le-Roi",
+  lazy val rerC_Sud_Direct = Seq("Choisy-le-Roi",
     "Villeneuve-le-Roi",
     "Ablon",
     "Athis-Mons",
-    "Juvisy"
-  )
-
-  val rerC_Sud_Orly = Seq(
-    "Choisy-le-Roi",
+    "Juvisy")
+  lazy val rerC_Sud_Orly = Seq("Choisy-le-Roi",
     "Les Saules",
     "Orly Ville",
     "Pont de Rungis - Aéroport d'Orly",
     "Rungis - La Fraternelle",
     "Chemin d'Antony",
     "Massy - Verrières",
-    "Massy - Palaiseau"
-  )
-
+    "Massy - Palaiseau")
   // --- LA GRANDE BOUCLE SUD ---
   // De Juvisy, ça part vers Versailles Chantiers (via Massy) ou Dourdan/Etampes
-
-  val rerC_Sud_Juvisy_Versailles = Seq(
-    "Juvisy",
+  val rerC_Sud_Juvisy_Versailles = Seq("Juvisy",
     "Savigny-sur-Orge",
     "Epinay-sur-Orge",
     "Sainte-Geneviève-des-Bois",
     "Saint-Michel-sur-Orge",
-    "Brétigny" // Nœud important
-  )
-
-  // Jonction Massy (venant d'Orly) -> Versailles Chantiers
-//  val rerC_Massy_Versailles = Seq(
-//    "Massy - Palaiseau",
-//    "Igny",
-//    "Bièvres",
-//    "Vauboyen",
-//    "Jouy-en-Josas",
-//    "Petit Jouy - Les Loges",
-//    "Versailles Chantiers" // Rejoint la branche Ouest St-Quentin !
-//  )
-
-  // Jonction entre la ligne directe (Juvisy) et la ligne Orly à Massy
-  // Note : Il y a des trains directs Juvisy -> Massy sans passer par Orly,
-  // mais pour simplifier le graphe, on considère souvent la connexion à Juvisy ou Savigny.
-  // Ajoutons la liaison Savigny -> Epinay (déjà dans Sud_Juvisy_Versailles)
-
+    "Brétigny") // Nœud important)
   // Branches Extrêmes Sud (Dourdan / Etampes)
-  val rerC_Sud_Dourdan = Seq(
-    "Brétigny",
+  lazy val rerC_Sud_Dourdan = Seq("Brétigny",
     "La Norville - Saint-Germain-lès-Arpajon",
     "Arpajon",
     "Egly",
@@ -170,20 +145,100 @@ object OrdreLigne {
     "Saint-Chéron",
     "Sermaise",
     "Dourdan",
-    "Dourdan - La Forêt"
-  )
-
-  val rerC_Sud_Etampes = Seq(
-    "Brétigny",
+    "Dourdan - La Forêt")
+  lazy val rerC_Sud_Etampes = Seq("Brétigny",
     "Marolles-en-Hurepoix",
     "Bouray",
     "Lardy",
     "Chamarande",
     "Etrechy",
     "Etampes",
-    "Saint-Martin d'Etampes"
+    "Saint-Martin d'Etampes")
+  // --- AGGREGATION RER C ---
+  lazy val rer_C = Seq(rerC_Troncon_Central,
+    rerC_Nord_Principal,
+    rerC_Nord_Pontoise,
+    rerC_Ouest_Commun,
+    rerC_Ouest_Chateau,
+    rerC_Ouest_StQuentin,
+    rerC_Sud_Commun,
+    rerC_Sud_Direct,
+    rerC_Sud_Orly,
+    rerC_Sud_Juvisy_Versailles,
+    rerC_Sud_Dourdan,
+    rerC_Sud_Etampes)
+
+
+  //Métro 1
+  lazy val metro_Ligne1 = Seq(
+    "La Défense", // Connexion RER A
+    "Esplanade de la Défense",
+    "Pont de Neuilly",
+    "Les Sablons",
+    "Porte Maillot",
+    "Argentine",
+    "Charles de Gaulle - Etoile", // Connexion RER A
+    "George V",
+    "Franklin D. Roosevelt", // VOTRE STATION VIP
+    "Champs-Elysées - Clemenceau",
+    "Concorde",
+    "Tuileries",
+    "Palais Royal - Musée du Louvre",
+    "Louvre - Rivoli",
+    "Châtelet les Halles", // Connexion RER A (Simplification pour Châtelet)
+    "Hôtel de Ville",
+    "Saint-Paul",
+    "Bastille",
+    "Gare de Lyon", // Connexion RER A
+    "Reuilly - Diderot",
+    "Nation", // Connexion RER A
+    "Porte de Vincennes",
+    "Saint-Mandé",
+    "Bérault",
+    "Château de Vincennes"
+  )
+  //Métro 4
+  lazy val metro_Ligne4 = Seq(
+    "Porte de Clignancourt",
+    "Simplon",
+    "Marcadet - Poissonniers",
+    "Château Rouge",
+    "Barbès - Rochechouart",
+    "Gare du Nord", // Connexion RER B / D
+    "Gare de l'Est",
+    "Château d'Eau",
+    "Strasbourg - Saint-Denis",
+    "Réaumur - Sébastopol",
+    "Étienne Marcel",
+    "Les Halles",
+    "Châtelet les Halles", // Connexion RER A (Fusion Châtelet + Les Halles)
+    "Cité",
+    "Saint-Michel", // Connexion RER B / C (Souvent St-Michel Notre-Dame)
+    "Odéon",
+    "Saint-Germain-des-Prés", // VOTRE STATION VIP
+    "Saint-Sulpice",
+    "Saint-Placide",
+    "Montparnasse - Bienvenüe",
+    "Vavin",
+    "Raspail",
+    "Denfert-Rochereau", // Connexion RER B
+    "Mouton-Duvernet",
+    "Alésia",
+    "Porte d'Orléans",
+    "Mairie de Montrouge",
+    "Barbara",
+    "Bagneux - Lucie Aubrac"
   )
 
-  // --- AGGREGATION RER C ---
-  lazy val rer_C = Seq(rerC_Troncon_Central, rerC_Nord_Principal, rerC_Nord_Pontoise, rerC_Ouest_Commun, rerC_Ouest_Chateau, rerC_Ouest_StQuentin, rerC_Sud_Commun, rerC_Sud_Direct, rerC_Sud_Orly, rerC_Sud_Juvisy_Versailles, rerC_Sud_Dourdan, rerC_Sud_Etampes)
+  lazy val definitionReseau = Seq(
+    (brancheA1, "RER A"),
+    (brancheA3, "RER A"),
+    (brancheA5, "RER A"),
+    (tronconCentral, "RER A"),
+    (brancheA2, "RER A"),
+    (brancheA4, "RER A"),
+    (metro_Ligne1, "Métro 1"),
+    (metro_Ligne4, "Métro 4")
+  )
+  lazy val tousLesTroncons = definitionReseau.map(_._1)
 }

@@ -19,109 +19,111 @@ object Graphx {
   def main(args: Array[String]): Unit = {
     val spark = DataReader.spark
     val nomCol = "`avg(Indicateur_Pollution_Global)`"
-    val auberVector = vectoriserStation(DataReader.auberdf,"Auber",nomCol)
-    val chateletVector = vectoriserStation(DataReader.chateletdf,"Châtelet les Halles",nomCol)
-    val nationVector = vectoriserStation(DataReader.nationdf,"Nation",nomCol)
-    val franklinVector = vectoriserStation(DataReader.franklindf,"Franklin-D.Roosevelt")
-    val saintGermainVector = vectoriserStation(DataReader.saintgermaindf,"Saint-Germain-des-Près")
+    val auberVector = vectoriserStation(DataReader.auberdf, "Auber", nomCol)
+    val chateletVector = vectoriserStation(DataReader.chateletdf, "Châtelet les Halles", nomCol)
+    val nationVector = vectoriserStation(DataReader.nationdf, "Nation", nomCol)
+    val franklinVector = vectoriserStation(DataReader.franklindf, "Franklin D. Roosevelt")
+    val saintGermainVector = vectoriserStation(DataReader.saintgermaindf, "Saint-Germain-des-Prés")
+    val idfVector = DataReader.reseauidf_df
     val unionVector = auberVector
       .union(chateletVector)
       .union(nationVector)
+      .union(franklinVector)
+      .union(saintGermainVector)
 
     //Conversion DataFrame -> RDD
 
     val colis = convertirVersRDD(unionVector)
 
 
-//    dfAuberVector
-//      .select(col("profil_24h")(19).as("Pollution_a_19h"))
-//      .show()
+
 
     // 1. Définition manuelle des séquences de stations (L'ordre est crucial)
 
     // Liste de tous les tronçons
 
-
+    val mapLignes = OrdreLigne.definitionReseau
+      .flatMap { case (stations, nomLigne) =>
+        stations.map(station => (station, nomLigne))
+      }
+      .groupBy(_._1)
+      .map { case (station, listPairs) =>
+        val ligneStr = listPairs.map(_._2).distinct.sorted.mkString(" / ")
+        (station, ligneStr)
+      }
     // --- 2. Création des ARÊTES (Edges) ---
     // --- TRANSFORMATION EN ARÊTES (BIDIRECTIONNEL) ---
 
-    val edgesList = OrdreLigne.rer_A.flatMap { ligne =>
+    val edgesList = OrdreLigne.tousLesTroncons.flatMap { ligne =>
       // On parcourt la ligne par paires (Station A, Station B)
       ligne.sliding(2).flatMap { case Seq(src, dst) =>
-        val idA = hashId(src)
-        val idB = hashId(dst)
-
-        // Pour chaque paire, on crée DEUX arêtes inverses
         Seq(
-          Edge(idA, idB, "connexion"), // Sens Aller
-          Edge(idB, idA, "connexion") // Sens Retour
+          Edge(hashId(src), hashId(dst), "connexion"),
+          Edge(hashId(dst), hashId(src), "connexion")
         )
       }
     }
-
-    val edgesRDD = spark.sparkContext.parallelize(edgesList.toSeq)
+    val edgesRDD = spark.sparkContext.parallelize(edgesList)
 
 
     // --- 3. Création des SOMMETS (Vertices) ---
     // On prend tous les noms de stations, on dédoublonne (ex: Vincennes apparait 3 fois), et on crée les sommets
-    val verticesList = OrdreLigne.rer_A.flatten.distinct.map { nom =>
-      (hashId(nom), nom) // (ID, Propriété) -> Ici la propriété est juste le Nom pour l'instant
-    }
-    val verticesRDD: RDD[(Long, String)] = spark.sparkContext.parallelize(verticesList)
+    val nomsUniques = OrdreLigne.tousLesTroncons.flatten.distinct
 
-    // --- 4. Création du Graphe ---
-    val graphRERA = Graph(verticesRDD, edgesRDD)
+    val verticesRDD = spark.sparkContext.parallelize(nomsUniques.map { nom =>
+      val id = hashId(nom)
 
-    val graphInitial = graphRERA.mapVertices{ (id, nomStation) =>
-      StationInfo(
-        nom = nomStation,
-        ligne = "RER A",
+      val ligneInfo = mapLignes.getOrElse(nom, "Inconnu")
+
+      val stationInfo = StationInfo(
+        nom = nom,
+        ligne = ligneInfo,
         pollution = Map[Int, Double]()
       )
-    }
+      (id, stationInfo)
+    })
+
+
+    val graphInitial = Graph(verticesRDD, edgesRDD)
+
+    // Petite vérification
     val graphFinal = graphInitial.outerJoinVertices(colis) {
-      case (id, stationInfoExistante, Some(nouveauVecteur)) =>
-        stationInfoExistante.copy(pollution = nouveauVecteur)
-      case (id, stationInfoExistante, None)=>
-        stationInfoExistante
+      case (id, stationInfo, Some(nouvelleMap)) =>
+        // On met à jour l'objet StationInfo avec la Map reçue
+        stationInfo.copy(pollution = nouvelleMap)
+
+      case (id, stationInfo, None) =>
+        stationInfo // Pas de changement
     }
-//    println("\n--- Vérification du Graphe Final ---")
-//
-//    // On cherche Auber
-//    val auber = graphFinal.vertices
-//      .filter { case (id, info) => info.nom == "Auber" }
-//      .first()
-//      ._2 // On récupère l'objet StationInfo
 
-//    println(s"Station : ${auber.nom}")
-//    println(s"Ligne   : ${auber.ligne}")
-//    println(s"Données : ${auber.pollution.size} heures enregistrées")
-//    println(s"Pollution à 19h : ${auber.pollution.getOrElse(4, 0.0)}")
-//    println("--- Affichage des Stations (Mode Objet) ---")
+    println("--- 📊 Affichage des Stations (Mode Objet) ---")
 
-    println("\n--- 🎲 Échantillon de connexions (Aller/Retour) ---")
-
-    // On prend 10 connexions au hasard dans le paquet
-    graphFinal.triplets.take(10).foreach { t =>
-      println(s"🚄 ${t.srcAttr.nom}  -->  ${t.dstAttr.nom}")
-    }
-    println("--- Affichage des Stations (Mode Objet) ---")
-
-    graphFinal.vertices.collect().foreach { case (id, info) =>
-      // 'info' est maintenant votre objet StationInfo
+    // On ajoute .sortBy(...) pour ne pas avoir les stations dans le désordre
+    graphFinal.vertices.collect().sortBy(_._2.nom).foreach { case (id, info) =>
 
       val nomStation = info.nom
       val mapDonnees = info.pollution
 
-      // Affichage
-      val statut = if (mapDonnees.nonEmpty) s"✅ ${mapDonnees.size} h de données" else "⚪ Vide"
+      // On crée une barre visuelle ou un statut
+      val statut = if (mapDonnees.nonEmpty) s"✅ ACTIF (${mapDonnees.size}h)" else "⚪ INACTIF"
+
+      // Affichage aligné
       println(f"Station : $nomStation%-30s | $statut")
 
+      // Si on a des données, on affiche le détail pour 4h du matin
       if (mapDonnees.nonEmpty) {
-        println(s"   -> Pollution à 4h : ${mapDonnees.getOrElse(4, 0.0)}")
+        val pollution4h = mapDonnees.getOrElse(4, 0.0)
+        // On affiche un petit avertissement visuel selon le niveau
+        val niveau = if (pollution4h > 0.5) "⚠️ Élevé" else "✅ Bas"
+        println(f"   -> 🕓 Pollution à 04h00 : $pollution4h%.3f ($niveau)")
       }
-
     }
+
+
+
+
+
+
 
 
 
