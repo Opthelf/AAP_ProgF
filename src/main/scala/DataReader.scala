@@ -128,10 +128,18 @@ object DataReader {
 
   }
   lazy val reseauidf_df : DataFrame = {
-    println("Chargement de Franklin-D-Roosevelt Métro")
+    println("Chargement réseau idf")
     // Étape 1 : Lecture
     val dfRaw = reader(spark,idf_path, doublon, sep)
     dfRaw
+
+  }
+
+  lazy val auberml : DataFrame = {
+    val dfRaw = reader(spark, auber_path, doublon, sep)
+    val dfTf = dataFrameTransform(dfRaw, ignore)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
+    calculerIndicateurDynamique(dfClean).na.drop()
 
   }
 

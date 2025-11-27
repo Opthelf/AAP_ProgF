@@ -2,8 +2,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions.{col, lit, max, min}
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
@@ -18,6 +16,7 @@ case class StationInfo(
 object Graphx {
   def main(args: Array[String]): Unit = {
     val spark = DataReader.spark
+    import spark.implicits._
     val nomCol = "`avg(Indicateur_Pollution_Global)`"
     val auberVector = vectoriserStation(DataReader.auberdf, "Auber", nomCol)
     val chateletVector = vectoriserStation(DataReader.chateletdf, "Châtelet les Halles", nomCol)
@@ -118,6 +117,60 @@ object Graphx {
         println(f"   -> 🕓 Pollution à 04h00 : $pollution4h%.3f ($niveau)")
       }
     }
+    // Dossier de sortie
+    val exportDir = "export_gephi_final"
+
+    // --- 1. EXPORT DES NOEUDS (Stations avec les 24h) ---
+
+    // On transforme le RDD de sommets en DataFrame pour faciliter l'export CSV avec Header
+    val nodesDF = graphFinal.vertices.map { case (id, info) =>
+      // On prépare une ligne avec : ID, Nom, Ligne + les 24 heures
+      (id, info.nom, info.ligne, info.pollution)
+    }.toDF("Id", "Label", "Ligne", "MapPollution")
+
+    // L'astuce : On éclate la Map en 24 colonnes distinctes
+    // On crée la liste des colonnes à sélectionner dynamiquement
+    val timeColumns = (0 to 23).map { h =>
+      // Pour chaque heure, on va chercher la valeur dans la Map. Si vide -> 0.0
+      coalesce(col("MapPollution").getItem(h), lit(0.0)).as(f"P_$h%02dh")
+    }
+
+    // On sélectionne les colonnes fixes + les 24 colonnes dynamiques
+    // 1. On définit les colonnes fixes
+    val fixedColumns = Seq(col("Id"), col("Label"), col("Ligne"))
+
+    // 2. On fusionne avec les colonnes dynamiques (opérateur ++)
+    val allColumns = fixedColumns ++ timeColumns
+
+    // 3. On passe le tout au select
+    val finalNodesDF = nodesDF.select(allColumns: _*)
+
+    println("--- Export des Nœuds (Nodes) ---")
+    finalNodesDF
+      .coalesce(1)
+      .write
+      .mode("overwrite")
+      .option("header", "true")
+      .option("delimiter", ";")
+      .csv(f"$exportDir/nodes")
+
+
+    // --- 2. EXPORT DES ARÊTES (Rails) ---
+
+    val edgesDF = graphFinal.edges.map { e =>
+      (e.srcId, e.dstId, e.attr)
+    }.toDF("Source", "Target", "Type")
+
+    println("--- Export des Arêtes (Edges) ---")
+    edgesDF
+      .coalesce(1)
+      .write
+      .mode("overwrite")
+      .option("header", "true")
+      .option("delimiter", ";")
+      .csv(f"$exportDir/edges")
+
+    println(s"✅ Export terminé ! Dossier : $exportDir")
 
 
 
