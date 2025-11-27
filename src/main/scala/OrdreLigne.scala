@@ -197,7 +197,66 @@ object OrdreLigne {
     "Bérault",
     "Château de Vincennes"
   )
-  //Métro 4
+  lazy val metro_Ligne2 = Seq(
+    "Porte Dauphine",
+    "Victor Hugo",
+    "Charles de Gaulle - Etoile", // Hub RER A
+    "Ternes",
+    "Courcelles",
+    "Monceau",
+    "Villiers",
+    "Rome",
+    "Place de Clichy",
+    "Blanche",
+    "Pigalle",
+    "Anvers",
+    "Barbès - Rochechouart",
+    "La Chapelle",
+    "Stalingrad",
+    "Jaurès",
+    "Colonel Fabien",
+    "Belleville",
+    "Couronnes",
+    "Ménilmontant",
+    "Père Lachaise",
+    "Philippe Auguste",
+    "Alexandre Dumas",
+    "Avron",
+    "Nation"                      // Hub RER A
+  )
+  lazy val metro_Ligne3 = Seq(
+    "Pont de Levallois - Bécon",
+    "Anatole France",
+    "Louise Michel",
+    "Porte de Champerret",
+    "Pereire",
+    "Wagram",
+    "Malesherbes",
+    "Villiers",
+    "Europe",
+    "Saint-Lazare",               // Hub RER E
+    "Havre - Caumartin",          // Connecté Auber
+    "Opéra",
+    "Quatre-Septembre",
+    "Bourse",
+    "Sentier",
+    "Réaumur - Sébastopol",
+    "Arts et Métiers",
+    "Temple",
+    "République",
+    "Parmentier",
+    "Rue Saint-Maur",
+    "Père Lachaise",
+    "Gambetta",
+    "Porte de Bagnolet",
+    "Gallieni"
+  )
+  lazy val metro_Ligne3bis = Seq(
+    "Gambetta",
+    "Pelleport",
+    "Saint-Fargeau",
+    "Porte des Lilas"
+  )
   lazy val metro_Ligne4 = Seq(
     "Porte de Clignancourt",
     "Simplon",
@@ -229,6 +288,444 @@ object OrdreLigne {
     "Barbara",
     "Bagneux - Lucie Aubrac"
   )
+  lazy val metro_Ligne5 = Seq(
+    "Bobigny - Pablo Picasso",
+    "Bobigny - Pantin - Raymond Queneau",
+    "Église de Pantin",
+    "Hoche",
+    "Porte de Pantin",
+    "Ourcq",
+    "Laumière",
+    "Jaurès",
+    "Stalingrad",
+    "Gare du Nord",               // Hub RER B/D/E
+    "Gare de l'Est",
+    "Jacques Bonsergent",
+    "République",
+    "Oberkampf",
+    "Richard-Lenoir",
+    "Bréguet - Sabin",
+    "Bastille",
+    "Quai de la Rapée",
+    "Gare d'Austerlitz",          // Hub RER C
+    "Saint-Marcel",
+    "Campo-Formio",
+    "Place d'Italie"
+  )
+  lazy val metro_Ligne6 = Seq(
+    "Charles de Gaulle - Etoile", // Hub RER A
+    "Kléber",
+    "Boissière",
+    "Trocadéro",
+    "Passy",
+    "Bir-Hakeim",
+    "Dupleix",
+    "La Motte-Picquet - Grenelle",
+    "Cambronne",
+    "Sèvres - Lecourbe",
+    "Pasteur",
+    "Montparnasse - Bienvenüe",
+    "Edgar Quinet",
+    "Raspail",
+    "Denfert-Rochereau",          // Hub RER B
+    "Saint-Jacques",
+    "Glacière",
+    "Corvisart",
+    "Place d'Italie",
+    "Nationale",
+    "Chevaleret",
+    "Quai de la Gare",
+    "Bercy",
+    "Dugommier",
+    "Daumesnil",
+    "Bel-Air",
+    "Picpus",
+    "Nation"                      // Hub RER A
+  )
+  lazy val m7_Troncon = Seq(
+    "La Courneuve - 8 Mai 1945",
+    "Fort d'Aubervilliers",
+    "Aubervilliers - Pantin - Quatre Chemins",
+    "Porte de la Villette",
+    "Corentin Cariou",
+    "Crimée",
+    "Riquet",
+    "Stalingrad",
+    "Louis Blanc",
+    "Château-Landon",
+    "Gare de l'Est",
+    "Poissonnière",
+    "Cadet",
+    "Le Peletier",
+    "Chaussée d'Antin - La Fayette",
+    "Opéra",
+    "Pyramides",
+    "Palais Royal - Musée du Louvre",
+    "Pont Neuf",
+    "Châtelet les Halles",        // Hub RER A/B/D
+    "Pont Marie",
+    "Sully - Morland",
+    "Jussieu",
+    "Place Monge",
+    "Censier - Daubenton",
+    "Les Gobelins",
+    "Place d'Italie",
+    "Tolbiac",
+    "Maison Blanche"
+  )
+  lazy val m7_Branche_Ivry = Seq(
+    "Maison Blanche",
+    "Porte d'Italie",
+    "Porte de Choisy",
+    "Porte d'Ivry",
+    "Pierre et Marie Curie",
+    "Mairie d'Ivry"
+  )
+  lazy val m7_Branche_Villejuif = Seq(
+    "Maison Blanche",
+    "Le Kremlin-Bicêtre",
+    "Villejuif - Léo Lagrange",
+    "Villejuif - Paul Vaillant-Couturier",
+    "Villejuif - Louis Aragon"
+  )
+  lazy val metro_Ligne7 = Seq(m7_Troncon,m7_Branche_Ivry,m7_Branche_Villejuif)
+  lazy val metro_Ligne7bis = Seq(
+    "Louis Blanc",       // Connexion Ligne 7
+    "Jaurès",            // Connexion Ligne 2 / 5
+    "Bolivar",
+    "Buttes Chaumont",
+    "Botzaris",
+    "Place des Fêtes",   // Connexion Ligne 11
+    "Pré-Saint-Gervais",
+    "Danube",
+    "Botzaris"           // Retour à la bifurcation pour fermer la boucle dans le graphe
+  )
+  lazy val metro_Ligne8 = Seq(
+    "Balard",
+    "Lourmel",
+    "Boucicaut",
+    "Félix Faure",
+    "Commerce",
+    "La Motte-Picquet - Grenelle",
+    "École Militaire",
+    "La Tour-Maubourg",
+    "Invalides",                  // Hub RER C
+    "Concorde",
+    "Madeleine",
+    "Opéra",
+    "Richelieu - Drouot",
+    "Grands Boulevards",
+    "Bonne Nouvelle",
+    "Strasbourg - Saint-Denis",
+    "République",
+    "Filles du Calvaire",
+    "Saint-Sébastien - Froissart",
+    "Chemin Vert",
+    "Bastille",
+    "Ledru-Rollin",
+    "Faidherbe - Chaligny",
+    "Reuilly - Diderot",
+    "Montgallet",
+    "Daumesnil",
+    "Michel Bizot",
+    "Porte Dorée",
+    "Porte de Charenton",
+    "Liberté",
+    "Charenton - Écoles",
+    "École Vétérinaire de Maisons-Alfort",
+    "Maisons-Alfort - Stade",
+    "Maisons-Alfort - Les Juilliottes",
+    "Créteil - L'Échat",
+    "Créteil - Université",
+    "Créteil - Préfecture",
+    "Pointe du Lac"
+  )
+  lazy val metro_Ligne9 = Seq(
+    "Pont de Sèvres",
+    "Billancourt",
+    "Marcel Sembat",
+    "Porte de Saint-Cloud",
+    "Exelmans",
+    "Michel-Ange - Molitor",
+    "Michel-Ange - Auteuil",
+    "Jasmin",
+    "Ranelagh",
+    "La Muette",
+    "Rue de la Pompe",
+    "Trocadéro",
+    "Iéna",
+    "Alma - Marceau",
+    "Franklin D. Roosevelt",      // Station VIP
+    "Saint-Philippe du Roule",
+    "Miromesnil",
+    "Saint-Augustin",
+    "Havre - Caumartin",          // Connecté Auber
+    "Chaussée d'Antin - La Fayette",
+    "Richelieu - Drouot",
+    "Grands Boulevards",
+    "Bonne Nouvelle",
+    "Strasbourg - Saint-Denis",
+    "République",
+    "Oberkampf",
+    "Saint-Ambroise",
+    "Voltaire",
+    "Charonne",
+    "Rue des Boulets",
+    "Nation",                     // Hub RER A
+    "Buzenval",
+    "Maraîchers",
+    "Porte de Montreuil",
+    "Robespierre",
+    "Croix de Chavaux",
+    "Mairie de Montreuil"
+  )
+
+  lazy val m10_Est = Seq(
+    "Gare d'Austerlitz",          // Hub RER C / Ligne 5
+    "Jussieu",                    // Hub Ligne 7
+    "Cardinal Lemoine",
+    "Maubert - Mutualité",
+    "Cluny - La Sorbonne",        // Connexion St-Michel (RER B/C)
+    "Odéon",                      // Hub Ligne 4
+    "Mabillon",
+    "Sèvres - Babylone",          // Hub Ligne 12
+    "Vaneau",
+    "Duroc",                      // Hub Ligne 13
+    "Ségur",
+    "La Motte-Picquet - Grenelle",// Hub Ligne 6 / 8
+    "Avenue Émile Zola",
+    "Charles Michels",
+    "Javel - André Citroën"       // PIVOT EST de la boucle
+  )
+  lazy val m10_Boucle_Nord = Seq(
+    "Javel - André Citroën",      // Départ Pivot
+    "Église d'Auteuil",
+    "Michel-Ange - Auteuil",      // Hub Ligne 9
+    "Porte d'Auteuil",
+    "Boulogne - Jean Jaurès"      // Arrivée PIVOT OUEST
+  )
+  lazy val m10_Boucle_Sud = Seq(
+    "Boulogne - Jean Jaurès",     // Départ Pivot
+    "Michel-Ange - Molitor",      // Hub Ligne 9
+    "Chardon-Lagache",
+    "Mirabeau",
+    "Javel - André Citroën"       // Arrivée Pivot
+  )
+  lazy val m10_Terminus = Seq(
+    "Boulogne - Jean Jaurès",
+    "Boulogne - Pont de Saint-Cloud"
+  )
+  lazy val metro_Ligne10 = Seq(m10_Est, m10_Boucle_Nord, m10_Boucle_Sud, m10_Terminus)
+
+  lazy val metro_Ligne11 = Seq(
+    "Châtelet les Halles",        // Hub RER A/B/D
+    "Hôtel de Ville",
+    "Rambuteau",
+    "Arts et Métiers",
+    "République",
+    "Goncourt",
+    "Belleville",
+    "Pyrénées",
+    "Jourdain",
+    "Place des Fêtes",
+    "Télégraphe",
+    "Porte des Lilas",
+    "Mairie des Lilas",
+    "Serge Gainsbourg",
+    "Romainville - Carnot",
+    "Montreuil - Hôpital",
+    "La Dhuys",
+    "Coteaux Beauclair",
+    "Rosny-Bois-Perrier"          // Hub RER E
+  )
+  lazy val metro_Ligne12 = Seq(
+    "Mairie d'Aubervilliers",
+    "Aimé Césaire",
+    "Front Populaire",
+    "Porte de la Chapelle",
+    "Marx Dormoy",
+    "Marcadet - Poissonniers",
+    "Jules Joffrin",
+    "Lamarck - Caulaincourt",
+    "Abbesses",
+    "Pigalle",
+    "Saint-Georges",
+    "Notre-Dame-de-Lorette",
+    "Trinité - d'Estienne d'Orves",
+    "Saint-Lazare",               // Hub RER E
+    "Madeleine",
+    "Concorde",
+    "Assemblée Nationale",
+    "Solférino",
+    "Rue du Bac",
+    "Sèvres - Babylone",
+    "Rennes",
+    "Notre-Dame-des-Champs",
+    "Montparnasse - Bienvenüe",
+    "Falguière",
+    "Pasteur",
+    "Volontaires",
+    "Vaugirard",
+    "Convention",
+    "Porte de Versailles",
+    "Corentin Celton",
+    "Mairie d'Issy"
+  )
+
+  lazy val m13_Branche_Asnieres = Seq(
+    "Les Courtilles",
+    "Les Agnettes",
+    "Gabriel Péri",
+    "Mairie de Clichy",
+    "Porte de Clichy",            // Hub RER C
+    "Brochant",
+    "La Fourche"
+  )
+  lazy val m13_Branche_StDenis = Seq(
+    "Saint-Denis - Université",
+    "Basilique de Saint-Denis",
+    "Saint-Denis - Porte de Paris",
+    "Carrefour Pleyel",
+    "Mairie de Saint-Ouen",
+    "Garibaldi",
+    "Porte de Saint-Ouen",
+    "Guy Môquet",
+    "La Fourche"
+  )
+  lazy val m13_Troncon = Seq(
+    "La Fourche",
+    "Place de Clichy",
+    "Liège",
+    "Saint-Lazare",               // Hub RER E
+    "Miromesnil",
+    "Champs-Elysées - Clemenceau",
+    "Invalides",                  // Hub RER C
+    "Varenne",
+    "Saint-François-Xavier",
+    "Duroc",
+    "Montparnasse - Bienvenüe",
+    "Gaîté",
+    "Pernety",
+    "Plaisance",
+    "Porte de Vanves",
+    "Malakoff - Plateau de Vanves",
+    "Malakoff - Rue Étienne Dolet",
+    "Châtillon - Montrouge"
+  )
+  lazy val metro_Ligne13 = Seq(m13_Troncon, m13_Branche_Asnieres, m13_Branche_StDenis)
+
+  lazy val metro_Ligne14 = Seq(
+    "Saint-Denis Pleyel",
+    "Mairie de Saint-Ouen",
+    "Porte de Clichy",
+    "Pont Cardinet",
+    "Saint-Lazare",               // Hub RER E
+    "Madeleine",
+    "Pyramides",
+    "Châtelet les Halles",        // Hub RER A/B/D
+    "Gare de Lyon",               // Hub RER A/D
+    "Bercy",
+    "Cour Saint-Émilion",
+    "Bibliothèque François Mitterrand", // Hub RER C
+    "Olympiades",
+    "Maison Blanche",
+    "Hôpital Bicêtre",
+    "Villejuif - Gustave Roussy",
+    "L'Haÿ-les-Roses",
+    "Chevilly-Larue",
+    "Thiais - Orly",
+    "Aéroport d'Orly"             // Hub RER C (Pt Rungis) / B (Antony/Orlyval)
+  )
+
+  lazy val definitionReseauMetro = Seq(
+    (metro_Ligne1,"Métro 1"),
+    (metro_Ligne2,"Métro 2"),
+    (metro_Ligne3,"Métro 3"),
+    (metro_Ligne3bis,"Métro 3B"),
+    (metro_Ligne4,"Métro 4"),
+    (metro_Ligne5,"Métro 5"),
+    (metro_Ligne6,"Métro 6"),
+
+    (m7_Branche_Ivry,"Métro 7"),
+    (m7_Troncon,"Métro 7"),
+    (m7_Branche_Villejuif,"Métro 7"),
+
+    (metro_Ligne7bis,"Métro 7B"),
+    (metro_Ligne8,"Métro 8"),
+    (metro_Ligne9,"Métro 9"),
+
+    (m10_Boucle_Nord,"Métro 10"),
+    (m10_Boucle_Sud,"Métro 10"),
+    (m10_Terminus,"Métro 10"),
+    (m10_Est,"Métro 10"),
+
+    (metro_Ligne11,"Métro 11"),
+    (metro_Ligne12,"Métro 12"),
+
+    (m13_Branche_Asnieres,"Métro 13"),
+    (m13_Troncon,"Métro 13"),
+    (m13_Branche_StDenis,"Métro 13"),
+    (metro_Ligne14,"Métro 14")
+
+
+  )
+
+  lazy val definitionReseauRER = Seq(
+    (brancheA1, "RER A"),
+    (brancheA3, "RER A"),
+    (brancheA5, "RER A"),
+    (tronconCentral, "RER A"),
+    (brancheA2, "RER A"),
+    (brancheA4, "RER A"),
+
+    (rerB_Nord_CDG,"RER B"),
+    (rerB_Nord_Mitry,"RER B"),
+    (rerB_Centre,"RER B"),
+    (rerB_Sud_Robinson,"RER B"),
+    (rerB_Sud_StRemy,"RER B"),
+
+    (rerD_Nord_Creil,"RER D"),
+    (rerD_Centre, "RER D"),
+    (rerD_Sud_Melun_Combs,"RER D"),
+    (rerD_Sud_Plateau,"RER D"),
+    (rerD_Sud_Malsherbes,"RER D"),
+    (rerD_Sud_Melun_Corbeil,"RER D"),
+
+    (rerE_Ouest,"RER E"),
+    (rerE_Est_Chelles, "RER E"),
+    (rerE_Est_Tournan,"RER E"),
+
+    (rerC_Troncon_Central,"RER C"),
+    (rerC_Nord_Principal,"RER C"),
+    (rerC_Nord_Pontoise,"RER C"),
+    (rerC_Ouest_Commun,"RER C"),
+    (rerC_Ouest_Chateau,"RER C"),
+    (rerC_Ouest_StQuentin,"RER C"),
+    (rerC_Sud_Commun,"RER C"),
+    (rerC_Sud_Direct,"RER C"),
+    (rerC_Sud_Orly,"RER C"),
+    (rerC_Sud_Juvisy_Versailles,"RER C"),
+    (rerC_Sud_Dourdan,"RER C"),
+    (rerC_Sud_Etampes,"RER C")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  )
 
   lazy val definitionReseau = Seq(
     (brancheA1, "RER A"),
@@ -241,4 +738,6 @@ object OrdreLigne {
     (metro_Ligne4, "Métro 4")
   )
   lazy val tousLesTroncons = definitionReseau.map(_._1)
+
+  lazy val tousLesTronconsMetro = definitionReseauMetro.map(_._1)
 }

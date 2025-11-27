@@ -13,32 +13,26 @@ case class StationInfo(
                         ligne: String,
                         pollution: Map[Int, Double], // Votre vecteur 24h
                       ) extends Serializable
+
 object Graphx {
+  val nomCol = "`avg(Indicateur_Pollution_Global)`"
+  val auberVector = vectoriserStation(DataReader.auberdf, "Auber", nomCol)
+  val chateletVector = vectoriserStation(DataReader.chateletdf, "Châtelet les Halles", nomCol)
+  val nationVector = vectoriserStation(DataReader.nationdf, "Nation", nomCol)
+  val franklinVector = vectoriserStation(DataReader.franklindf, "Franklin D. Roosevelt")
+  val saintGermainVector = vectoriserStation(DataReader.saintgermaindf, "Saint-Germain-des-Prés")
+  val unionVector = auberVector
+    .union(chateletVector)
+    .union(nationVector)
+    .union(franklinVector)
+    .union(saintGermainVector)
+  //Conversion DataFrame -> RDD
+  val colis = convertirVersRDD(unionVector)
+
   def main(args: Array[String]): Unit = {
     val spark = DataReader.spark
     import spark.implicits._
-    val nomCol = "`avg(Indicateur_Pollution_Global)`"
-    val auberVector = vectoriserStation(DataReader.auberdf, "Auber", nomCol)
-    val chateletVector = vectoriserStation(DataReader.chateletdf, "Châtelet les Halles", nomCol)
-    val nationVector = vectoriserStation(DataReader.nationdf, "Nation", nomCol)
-    val franklinVector = vectoriserStation(DataReader.franklindf, "Franklin D. Roosevelt")
-    val saintGermainVector = vectoriserStation(DataReader.saintgermaindf, "Saint-Germain-des-Prés")
-    val idfVector = DataReader.reseauidf_df
-    val unionVector = auberVector
-      .union(chateletVector)
-      .union(nationVector)
-      .union(franklinVector)
-      .union(saintGermainVector)
-
-    //Conversion DataFrame -> RDD
-
-    val colis = convertirVersRDD(unionVector)
-
-
-
-
     // 1. Définition manuelle des séquences de stations (L'ordre est crucial)
-
     // Liste de tous les tronçons
 
     val mapLignes = OrdreLigne.definitionReseau
@@ -95,82 +89,62 @@ object Graphx {
         stationInfo // Pas de changement
     }
 
-    println("--- 📊 Affichage des Stations (Mode Objet) ---")
 
-    // On ajoute .sortBy(...) pour ne pas avoir les stations dans le désordre
-    graphFinal.vertices.collect().sortBy(_._2.nom).foreach { case (id, info) =>
 
-      val nomStation = info.nom
-      val mapDonnees = info.pollution
-
-      // On crée une barre visuelle ou un statut
-      val statut = if (mapDonnees.nonEmpty) s"✅ ACTIF (${mapDonnees.size}h)" else "⚪ INACTIF"
-
-      // Affichage aligné
-      println(f"Station : $nomStation%-30s | $statut")
-
-      // Si on a des données, on affiche le détail pour 4h du matin
-      if (mapDonnees.nonEmpty) {
-        val pollution4h = mapDonnees.getOrElse(4, 0.0)
-        // On affiche un petit avertissement visuel selon le niveau
-        val niveau = if (pollution4h > 0.5) "⚠️ Élevé" else "✅ Bas"
-        println(f"   -> 🕓 Pollution à 04h00 : $pollution4h%.3f ($niveau)")
-      }
-    }
     // Dossier de sortie
-    val exportDir = "export_gephi_final"
-
-    // --- 1. EXPORT DES NOEUDS (Stations avec les 24h) ---
-
-    // On transforme le RDD de sommets en DataFrame pour faciliter l'export CSV avec Header
-    val nodesDF = graphFinal.vertices.map { case (id, info) =>
-      // On prépare une ligne avec : ID, Nom, Ligne + les 24 heures
-      (id, info.nom, info.ligne, info.pollution)
-    }.toDF("Id", "Label", "Ligne", "MapPollution")
-
-    // L'astuce : On éclate la Map en 24 colonnes distinctes
-    // On crée la liste des colonnes à sélectionner dynamiquement
-    val timeColumns = (0 to 23).map { h =>
-      // Pour chaque heure, on va chercher la valeur dans la Map. Si vide -> 0.0
-      coalesce(col("MapPollution").getItem(h), lit(0.0)).as(f"P_$h%02dh")
-    }
-
-    // On sélectionne les colonnes fixes + les 24 colonnes dynamiques
-    // 1. On définit les colonnes fixes
-    val fixedColumns = Seq(col("Id"), col("Label"), col("Ligne"))
-
-    // 2. On fusionne avec les colonnes dynamiques (opérateur ++)
-    val allColumns = fixedColumns ++ timeColumns
-
-    // 3. On passe le tout au select
-    val finalNodesDF = nodesDF.select(allColumns: _*)
-
-    println("--- Export des Nœuds (Nodes) ---")
-    finalNodesDF
-      .coalesce(1)
-      .write
-      .mode("overwrite")
-      .option("header", "true")
-      .option("delimiter", ";")
-      .csv(f"$exportDir/nodes")
-
-
-    // --- 2. EXPORT DES ARÊTES (Rails) ---
-
-    val edgesDF = graphFinal.edges.map { e =>
-      (e.srcId, e.dstId, e.attr)
-    }.toDF("Source", "Target", "Type")
-
-    println("--- Export des Arêtes (Edges) ---")
-    edgesDF
-      .coalesce(1)
-      .write
-      .mode("overwrite")
-      .option("header", "true")
-      .option("delimiter", ";")
-      .csv(f"$exportDir/edges")
-
-    println(s"✅ Export terminé ! Dossier : $exportDir")
+//    val exportDir = "export_gephi_final"
+//
+//    // --- 1. EXPORT DES NOEUDS (Stations avec les 24h) ---
+//
+//    // On transforme le RDD de sommets en DataFrame pour faciliter l'export CSV avec Header
+//    val nodesDF = graphFinal.vertices.map { case (id, info) =>
+//      // On prépare une ligne avec : ID, Nom, Ligne + les 24 heures
+//      (id, info.nom, info.ligne, info.pollution)
+//    }.toDF("Id", "Label", "Ligne", "MapPollution")
+//
+//    // L'astuce : On éclate la Map en 24 colonnes distinctes
+//    // On crée la liste des colonnes à sélectionner dynamiquement
+//    val timeColumns = (0 to 23).map { h =>
+//      // Pour chaque heure, on va chercher la valeur dans la Map. Si vide -> 0.0
+//      coalesce(col("MapPollution").getItem(h), lit(0.0)).as(f"P_$h%02dh")
+//    }
+//
+//    // On sélectionne les colonnes fixes + les 24 colonnes dynamiques
+//    // 1. On définit les colonnes fixes
+//    val fixedColumns = Seq(col("Id"), col("Label"), col("Ligne"))
+//
+//    // 2. On fusionne avec les colonnes dynamiques (opérateur ++)
+//    val allColumns = fixedColumns ++ timeColumns
+//
+//    // 3. On passe le tout au select
+//    val finalNodesDF = nodesDF.select(allColumns: _*)
+//
+//    println("--- Export des Nœuds (Nodes) ---")
+//    finalNodesDF
+//      .coalesce(1)
+//      .write
+//      .mode("overwrite")
+//      .option("header", "true")
+//      .option("delimiter", ";")
+//      .csv(f"$exportDir/nodes")
+//
+//
+//    // --- 2. EXPORT DES ARÊTES (Rails) ---
+//
+//    val edgesDF = graphFinal.edges.map { e =>
+//      (e.srcId, e.dstId, e.attr)
+//    }.toDF("Source", "Target", "Type")
+//
+//    println("--- Export des Arêtes (Edges) ---")
+//    edgesDF
+//      .coalesce(1)
+//      .write
+//      .mode("overwrite")
+//      .option("header", "true")
+//      .option("delimiter", ";")
+//      .csv(f"$exportDir/edges")
+//
+//    println(s"✅ Export terminé ! Dossier : $exportDir")
 
 
 
@@ -230,5 +204,59 @@ object Graphx {
           collect_list(col(colScore))
         ).as("profil_24h")
       )
+  }
+
+  def exporterVersGephi(graph: Graph[StationInfo, String], exportDir: String)(implicit spark: SparkSession): Unit = {
+
+    import spark.implicits._ // Indispensable pour .toDF() et les $
+
+    println(s"💾 Démarrage de l'export vers : $exportDir")
+
+    // --- 1. EXPORT DES NOEUDS (NODES) ---
+
+    // A. Transformation RDD -> DataFrame
+    val nodesDF = graph.vertices.map { case (id, info) =>
+      (id, info.nom, info.ligne, info.pollution)
+    }.toDF("Id", "Label", "Ligne", "MapPollution")
+
+    // B. Création des 24 colonnes dynamiques
+    val timeColumns = (0 to 23).map { h =>
+      // On extrait la valeur pour l'heure h, ou 0.0 si vide
+      coalesce(col("MapPollution").getItem(h), lit(0.0)).as(f"P_$h%02dh")
+    }
+
+    // C. Sélection finale (Colonnes Fixes + Colonnes Dynamiques)
+    val fixedColumns = Seq(col("Id"), col("Label"), col("Ligne"))
+    val allColumns = fixedColumns ++ timeColumns
+
+    val finalNodesDF = nodesDF.select(allColumns: _*)
+
+    // D. Écriture CSV
+    println("   -> Écriture du fichier Nodes...")
+    finalNodesDF
+      .coalesce(1)
+      .write
+      .mode("overwrite")
+      .option("header", "true")
+      .option("delimiter", ";")
+      .csv(s"$exportDir/nodes")
+
+
+    // --- 2. EXPORT DES ARÊTES (EDGES) ---
+
+    val edgesDF = graph.edges.map { e =>
+      (e.srcId, e.dstId, e.attr)
+    }.toDF("Source", "Target", "Type")
+
+    println("   -> Écriture du fichier Edges...")
+    edgesDF
+      .coalesce(1)
+      .write
+      .mode("overwrite")
+      .option("header", "true")
+      .option("delimiter", ";")
+      .csv(s"$exportDir/edges")
+
+    println("✅ Export Gephi terminé avec succès !")
   }
 }

@@ -131,7 +131,16 @@ object DataReader {
     println("Chargement réseau idf")
     // Étape 1 : Lecture
     val dfRaw = reader(spark,idf_path, doublon, sep)
-    dfRaw
+    val idfDfClean = dfRaw.withColumn("nom_de_la_station",
+      when(col("nom_de_la_station").contains("Grande Arche"), "La Défense")
+        .otherwise(col("nom_de_la_station"))
+    )
+    idfDfClean
+      .drop("stop_lon")
+      .drop("stop_lat")
+      .drop("nom_de_la_ligne")
+
+
 
   }
 
@@ -140,8 +149,62 @@ object DataReader {
     val dfTf = dataFrameTransform(dfRaw, ignore)
     val dfClean = remplacerOutliersParNull(dfTf, Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
     calculerIndicateurDynamique(dfClean).na.drop()
+      .drop("NO")
+      .drop("CO2")
+      .drop("NO2")
+      .drop("PM10")
+      .drop("PM2_5")
+
 
   }
+  lazy val chateletml : DataFrame = {
+    val dfRaw = reader(spark, chatelet_rer_path, doublon, sep)
+    val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","TEMP","HUMI"))
+     calculerIndicateurDynamique(dfClean).na.drop()
+       .drop("PM10")
+
+
+
+  }
+  lazy val nationml : DataFrame = {
+    val dfRaw = reader(spark, nation_rer_path, doublon, sep)
+    val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","PM2_5","TEMP","HUMI"))
+    calculerIndicateurDynamique(dfClean).na.drop()
+      .drop("PM10")
+      .drop("PM2_5")
+
+  }
+  lazy val saintgermainml : DataFrame = {
+    val dfRaw = reader(spark, saint_germain_metro_path, doublon, sep)
+    val dfTf = dataFrameTransform(dfRaw, ignore)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","TEMP","HUMI"))
+    calculerIndicateurDynamique(dfClean).na.drop()
+      .drop("PM10")
+
+
+
+
+  }
+  lazy val franklinml : DataFrame = {
+    val dfRaw = reader(spark, franklin_metro_path, doublon, sep)
+    val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
+    val dfClean = remplacerOutliersParNull(dfTf, Array("NO","NO2","PM10","CO2","TEMP","HUMI"))
+    calculerIndicateurDynamique(dfClean).na.drop()
+      .drop("NO")
+      .drop("NO2")
+      .drop("PM10")
+      .drop("CO2")
+
+  }
+
+
+
+
+
+
+
 
 
 
@@ -150,32 +213,8 @@ object DataReader {
   def main(args: Array[String]): Unit = {
 
 
-    val auber_rer= "src/Data/auber.csv"
-    val chatelet_metro = "src/Data/station-chatelet-2021-maintenant.csv"
-    val chatelet_rer = "src/Data/station-chatelet-rer-a0.csv"
-    val franklin_metro = "src/Data/station-franklin-d-roosevelt-2021-maintenant.csv"
-    val nation_rer = "src/Data/station-nation-rer-a0.csv"
-    val saint_germain_metro = "src/Data/station-saint-germain-des-pres-de-2024-a-nos-jours-.csv"
-
-     //À transformer
 
     try{
-      //Lecture
-      import spark.implicits._
-      val sep = ";"
-      val ignore = Seq("DATE/HEURE")
-      val ignore_minuscule = ignore.map(_.toLowerCase())
-
-      val chatelet_metro_df = reader(spark, chatelet_metro, doublon, sep)
-      val chatelet_rer_df = reader(spark, chatelet_rer, doublon, sep)
-      val franklin_metro_df = reader(spark, franklin_metro, doublon, sep)
-      val nation_rer_df = reader(spark, nation_rer, doublon, sep)
-      val saint_germain_metro_df = reader(spark, saint_germain_metro, doublon, sep)
-      val idf_df = reader(spark, idf_path, doublon, sep)
-      val idf_final = analyzePollution(idf_df)
-      idf_final.show()
-
-      //Transformation
 
       //Transformation Île de France df
 //      val idf_tf1 = idf_df.drop("point_geo")
