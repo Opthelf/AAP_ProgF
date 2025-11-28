@@ -198,6 +198,11 @@ object DataReader {
       .drop("CO2")
 
   }
+  lazy val reseauidf_cluster : DataFrame = {
+    val dfRaw = reader(spark,idf_path, doublon, sep)
+    dfRaw
+
+  }
 
 
 
