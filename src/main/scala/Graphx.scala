@@ -11,7 +11,7 @@ import projet.OrdreLigne
 case class StationInfo(
                         nom: String,
                         ligne: String,
-                        pollution: Map[Int, Double], // Votre vecteur 24h
+                        pollution: Map[Int, Double],
                       ) extends Serializable
 
 object Graphx {
@@ -30,6 +30,7 @@ object Graphx {
   val colis = convertirVersRDD(unionVector)
 
   def main(args: Array[String]): Unit = {
+    auberVector.show()
     val spark = DataReader.spark
     import spark.implicits._
     // 1. Définition manuelle des séquences de stations (L'ordre est crucial)
@@ -56,14 +57,14 @@ object Graphx {
         )
       }
     }
-    val edgesRDD = spark.sparkContext.parallelize(edgesList)
+    val edges = spark.sparkContext.parallelize(edgesList)
 
 
     // --- 3. Création des SOMMETS (Vertices) ---
     // On prend tous les noms de stations, on dédoublonne (ex: Vincennes apparait 3 fois), et on crée les sommets
     val nomsUniques = OrdreLigne.tousLesTroncons.flatten.distinct
 
-    val verticesRDD = spark.sparkContext.parallelize(nomsUniques.map { nom =>
+    val vertices = spark.sparkContext.parallelize(nomsUniques.map { nom =>
       val id = hashId(nom)
 
       val ligneInfo = mapLignes.getOrElse(nom, "Inconnu")
@@ -77,9 +78,7 @@ object Graphx {
     })
 
 
-    val graphInitial = Graph(verticesRDD, edgesRDD)
-
-    // Petite vérification
+    val graphInitial = Graph(vertices, edges)
     val graphFinal = graphInitial.outerJoinVertices(colis) {
       case (id, stationInfo, Some(nouvelleMap)) =>
         // On met à jour l'objet StationInfo avec la Map reçue
@@ -90,85 +89,12 @@ object Graphx {
     }
 
 
-
-    // Dossier de sortie
-//    val exportDir = "export_gephi_final"
-//
-//    // --- 1. EXPORT DES NOEUDS (Stations avec les 24h) ---
-//
-//    // On transforme le RDD de sommets en DataFrame pour faciliter l'export CSV avec Header
-//    val nodesDF = graphFinal.vertices.map { case (id, info) =>
-//      // On prépare une ligne avec : ID, Nom, Ligne + les 24 heures
-//      (id, info.nom, info.ligne, info.pollution)
-//    }.toDF("Id", "Label", "Ligne", "MapPollution")
-//
-//    // L'astuce : On éclate la Map en 24 colonnes distinctes
-//    // On crée la liste des colonnes à sélectionner dynamiquement
-//    val timeColumns = (0 to 23).map { h =>
-//      // Pour chaque heure, on va chercher la valeur dans la Map. Si vide -> 0.0
-//      coalesce(col("MapPollution").getItem(h), lit(0.0)).as(f"P_$h%02dh")
-//    }
-//
-//    // On sélectionne les colonnes fixes + les 24 colonnes dynamiques
-//    // 1. On définit les colonnes fixes
-//    val fixedColumns = Seq(col("Id"), col("Label"), col("Ligne"))
-//
-//    // 2. On fusionne avec les colonnes dynamiques (opérateur ++)
-//    val allColumns = fixedColumns ++ timeColumns
-//
-//    // 3. On passe le tout au select
-//    val finalNodesDF = nodesDF.select(allColumns: _*)
-//
-//    println("--- Export des Nœuds (Nodes) ---")
-//    finalNodesDF
-//      .coalesce(1)
-//      .write
-//      .mode("overwrite")
-//      .option("header", "true")
-//      .option("delimiter", ";")
-//      .csv(f"$exportDir/nodes")
-//
-//
-//    // --- 2. EXPORT DES ARÊTES (Rails) ---
-//
-//    val edgesDF = graphFinal.edges.map { e =>
-//      (e.srcId, e.dstId, e.attr)
-//    }.toDF("Source", "Target", "Type")
-//
-//    println("--- Export des Arêtes (Edges) ---")
-//    edgesDF
-//      .coalesce(1)
-//      .write
-//      .mode("overwrite")
-//      .option("header", "true")
-//      .option("delimiter", ";")
-//      .csv(f"$exportDir/edges")
-//
-//    println(s"✅ Export terminé ! Dossier : $exportDir")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   }
   def hashId(nom: String): Long = if (nom == null) 0L else nom.hashCode.toLong
 
   def convertirVersRDD(dfVectorise: DataFrame): RDD[(VertexId, Map[Int, Double])] = {
 
     // Helper ID (interne à la fonction pour être autonome)
-    def localHashId(str: String): Long = if (str == null) 0L else str.hashCode.toLong
 
     dfVectorise.rdd.map { row =>
       // 1. Récupération et Nettoyage du Nom
@@ -183,7 +109,7 @@ object Graphx {
       }
 
       // 3. Création du tuple (ID, Donnée)
-      (localHashId(nomStation), mapVector)
+      (hashId(nomStation), mapVector)
     }
   }
 
@@ -210,7 +136,7 @@ object Graphx {
 
     import spark.implicits._ // Indispensable pour .toDF() et les $
 
-    println(s"💾 Démarrage de l'export vers : $exportDir")
+    println(s" Démarrage de l'export vers : $exportDir")
 
     // --- 1. EXPORT DES NOEUDS (NODES) ---
 

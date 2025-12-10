@@ -36,8 +36,7 @@ object DataReader {
   val ignore_minuscule = ignore.map(_.toLowerCase())
   val doublon = true
   val index = "Indicateur_Pollution_Global"
-
-  lazy val auberdf : DataFrame = {
+  val auberdf : DataFrame = {
     println("Chargement d'Auber RER")
     // Étape 1 : Lecture
     val dfRaw = reader(spark, auber_path, doublon, sep)
@@ -81,8 +80,10 @@ object DataReader {
     // Étape 2 : Transformation
     val dfTf = dataFrameTransform(dfRaw, ignore_minuscule)
 
+
     // Étape 3 : Nettoyage (Outliers)
     val dfClean = remplacerOutliersParNull(dfTf, Array("PM10","PM2_5","TEMP","HUMI"))
+
 
     // Étape 4 : Calcul Indicateur
     val dfIndic = calculerIndicateurDynamique(dfClean)
@@ -217,62 +218,8 @@ object DataReader {
 
   def main(args: Array[String]): Unit = {
 
-
-
     try{
-
-      //Transformation Île de France df
-//      val idf_tf1 = idf_df.drop("point_geo")
-//        .drop("mesures_d_amelioration_mises_en_place_ou_prevues") //on a déjà les colonnes long & lat
-//        .drop("recommandation_de_surveillance")
-//        .drop("action_s_qai_en_cours")
-//        .drop("lien_vers_les_mesures_en_direct")
-//        .drop("air")
-//        .drop("actions")
-//        .drop("niveau_pollution") // niveau pollution fait une moyenne de pollution entre p_air & p_particules : p_air & p_particules suffisent
-//        .drop("niveau_de_pollution")
-//        .drop("pollution_air")// la donnée est reportée dans niveau sans les incertitudes
-//        .drop("incertitude") //pour simplifier le problème
-//        .drop("duree_des_mesures")
-
-//
-////      //qualitative -> quantitative
-//      val idf_tf2 = encodePollutionLevels(idf_tf1)
-//        .drop("niveau")
-//        .drop("niveau_de_pollution_aux_particules")
-//        .drop("pollution_particules")
-//        .drop("identifiant_station")
-//
-//      idf_tf2
-//        .coalesce(1)
-//        .write
-//        .option("header","true")
-//        .option("delimiter",";")
-//        .mode("overwrite")
-//        .csv("src/Data/idf_nettoye")
-
-      //Statistiques
-
-
-
-//      val idf_anaylze = analyzePollution(idf_df)
-//      val idf_particles_analyze = analyzeParticlesPollution(idf_tf2)
-//      idf_anaylze.orderBy("Ligne").show(25)
-//      val auber_clean = remplacerOutliersParNull(auber_tf,Array("NO", "NO2", "PM10", "PM2_5", "CO2", "TEMP", "HUMI"))
-//      val chatelet_clean = remplacerOutliersParNull(chatelet_r_tf,Array("PM10","TEMP","HUMI"))
-//      val nation_clean = remplacerOutliersParNull(nation_tf,Array("PM10","PM2_5","TEMP","HUMI"))
-//      val franklin_clean = remplacerOutliersParNull(fk_tf,Array("NO","NO2","PM10","CO2","TEMP","HUMI"))
-//      val saint_germain_clean = remplacerOutliersParNull(sg_tf,Array("PM10","TEMP","HUMI"))
-//
-
-
-
-
-
-
-
-
-
+      nationml.describe().show()
     }catch{
       case e: Exception => println(s"Une erreur est survenue: ${e.getMessage}")
     }finally {
@@ -323,7 +270,7 @@ object DataReader {
             // On enlève le symbole ">", on récupère le nombre tel quel (plafond bas)
             regexp_replace(clean, ">", "").cast(DoubleType)
           )
-          .when(clean.isInCollection(Seq("ND", "n/a", "mq", "-", "vide")),
+          .when(clean.isInCollection(Seq("ND")),
             // CAS Déchets explicites -> NULL
             lit(null).cast(DoubleType)
           )
@@ -440,6 +387,8 @@ object DataReader {
 
     dfResultat
   }
+
+
 
   def calculerIndicateurDynamique(df: DataFrame): DataFrame = {
 

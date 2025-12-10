@@ -35,7 +35,7 @@ object Clustering {
     println(s"Données prêtes pour ${dfReady.count()} stations.")
 
     // --- 3. ENTRAÎNEMENT DU K-MEANS ---
-    // On choisit K=5 (pour essayer de trouver 5 types de zones)
+    // On choisit K=2 (pour essayer de trouver 2 types de zones)
     val kmeans = new KMeans().setK(2).setSeed(42L).setFeaturesCol("features")
     val model = kmeans.fit(dfReady)
 
@@ -44,7 +44,7 @@ object Clustering {
 
     // --- 4. ANALYSE DES RÉSULTATS ---
 
-    println("\n--- 📊 Analyse des Clusters (Zones détectées) ---")
+    println("\n---  Analyse des Clusters (Zones détectées) ---")
 
     // On calcule la moyenne de pollution et la position moyenne par cluster
     predictions.groupBy("prediction")
@@ -58,6 +58,7 @@ object Clustering {
       .show(false)
 
     val hashIdUDF = udf((nom: String) => if (nom == null) 0L else nom.trim.hashCode.toLong)
+
 
 
 

@@ -24,12 +24,11 @@ object Prediction {
     val df5 = saintgermainml.withColumn("nom_station", lit("StGermain"))
     val seqStation = Seq(df1,df2,df3,df4,df5)
 
-    val dfGlobal = df2
 
     seqStation.foreach { currentDF =>
       val nomStation = currentDF.select("nom_station").first().getString(0)
       println(s"\n" + "="*50)
-      println(s"  🚉  TRAITEMENT DE : ${nomStation.toUpperCase}")
+      println(s"    TRAITEMENT DE : ${nomStation.toUpperCase}")
       println(s"="*50)
 
       val windowSpec = Window.orderBy("DATE/HEURE")
@@ -49,20 +48,20 @@ object Prediction {
       val final_df = assembler.transform(dfFeatures)
         .withColumnRenamed("Indicateur_Pollution_Global", "label")
 
-      val Array(trainData, testData) = final_df.randomSplit(Array(0.8, 0.2), seed = 43L)
+      val Array(trainData, testData) = final_df.randomSplit(Array(0.8, 0.2), seed = 41L)
 
       println(s"Données d'entraînement : ${trainData.count()} lignes")
       println(s"Données de test : ${testData.count()} lignes")
 
       // 3. ENTRAÎNEMENT DES MODÈLES
 
-      // --- Modèle A : Régression Linéaire (La base) ---
+      // --- Modèle A : Régression Linéaire  ---
       println("\n--- 1. Régression Linéaire ---")
       val lr = new LinearRegression().setLabelCol("label").setFeaturesCol("features")
       val lrModel = lr.fit(trainData)
       val lrPred = lrModel.transform(testData)
 
-      // --- Modèle B : Arbre de Décision (Capable de voir les pics non-linéaires) ---
+      // --- Modèle B : Arbre de Décision ---
       println("--- 2. Arbre de Décision ---")
       val dt = new DecisionTreeRegressor().setLabelCol("label").setFeaturesCol("features")
       val dtModel = dt.fit(trainData)
@@ -81,7 +80,7 @@ object Prediction {
       val rmseDT = evaluator.evaluate(dtPred)
       val rmseRF = evaluator.evaluate(rfPred)
 
-      println("\n=== 🏆 RÉSULTATS (Erreur Moyenne) ===")
+      println("\n===  RÉSULTATS (Erreur Moyenne) ===")
       println(f"Régression Linéaire : $rmseLR%.4f")
       println(f"Arbre de Décision   : $rmseDT%.4f")
       println(f"Forêt Aléatoire     : $rmseRF%.4f")
@@ -93,7 +92,6 @@ object Prediction {
 
 
     }
-    // --- ÉTAPE 2 : FEATURE ENGINEERING AVANCÉ ---
 
     // A. Encodage du nom de la station (String -> Index Numérique)
     // L'IA a besoin de chiffres. "Auber" devient 0.0, "Nation" devient 1.0...
