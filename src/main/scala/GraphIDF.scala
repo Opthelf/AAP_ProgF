@@ -110,7 +110,7 @@ object GraphIDF {
 
     import spark.implicits._
 
-    println(s"💾 Démarrage de l'export GLOBAL vers : $exportDir")
+    println(s" Démarrage de l'export GLOBAL vers : $exportDir")
 
     // --- 1. EXPORT DES NOEUDS (NODES) ---
 

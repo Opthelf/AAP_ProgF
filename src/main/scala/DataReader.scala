@@ -3,8 +3,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions.{col, min, max, lit}
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
@@ -249,7 +247,7 @@ object DataReader {
     val colsToProcess = data.columns.filterNot(c => ignore.contains(c))
 
     val transformedCols = data.columns.map { colName =>
-      // Sécurisation du nom (backticks)
+      // Sécurisation du nom
       val colNameSec = s"`$colName`"
 
       if (colsToProcess.contains(colName)) {
@@ -351,10 +349,6 @@ object DataReader {
   def remplacerOutliersParNull(df: DataFrame, colonnes: Array[String]): DataFrame = {
 
     var dfResultat = df
-    val boundsMap = scala.collection.mutable.Map[String, (Double, Double)]()
-
-    //println("--- Nettoyage en cours (Remplacement par NULL) ---")
-
     colonnes.foreach { colName =>
       // 1. Calculs Statistiques (IQR)
       val quantiles = dfResultat.stat.approxQuantile(colName, Array(0.25, 0.75), 0.01)
@@ -372,9 +366,6 @@ object DataReader {
         math.max(0.0, rawLowerBound)
       }
 
-      // Stockage pour le rapport
-      boundsMap += (colName -> (lowerBound, upperBound))
-
       // 3. Remplacement conditionnel
       // SI (valeur < min OU valeur > max) ALORS null SINON garder valeur
       dfResultat = dfResultat.withColumn(colName,
@@ -383,7 +374,6 @@ object DataReader {
       )
     }
 
-    // 4. Rapport
 
     dfResultat
   }

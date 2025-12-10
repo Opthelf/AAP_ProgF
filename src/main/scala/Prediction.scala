@@ -1,5 +1,6 @@
 package projet
 import projet.DataReader
+import org.apache.spark.ml.feature.StandardScaler
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.ml.regression.{LinearRegression, DecisionTreeRegressor, RandomForestRegressor}
 import org.apache.spark.ml.evaluation.RegressionEvaluator
@@ -45,8 +46,11 @@ object Prediction {
         .setInputCols(Array("heure_jour", "mois", "jour_semaine","pollution_precedente"))
         .setOutputCol("features")
 
+
+
       val final_df = assembler.transform(dfFeatures)
         .withColumnRenamed("Indicateur_Pollution_Global", "label")
+
 
       val Array(trainData, testData) = final_df.randomSplit(Array(0.8, 0.2), seed = 41L)
 
