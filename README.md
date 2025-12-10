@@ -7,11 +7,9 @@ Avant de cloner le projet, vous devez avoir les logiciels suivants installés et
 
     Java Development Kit (JDK) :
     
-    Version requise : JDK 17
+    Version requise : JDK 11
     
-    Vérification : java --version doit afficher une version 17.x.x.
-    
-    Note : Spark 4.0.x ne fonctionnera pas avec des versions plus anciennes comme JDK 8 ou 11.
+    Vérification : java --version doit afficher une version 11.x.x.
     
     sbt (Simple Build Tool) :
     
@@ -26,7 +24,7 @@ Vous n'avez pas besoin d'installer manuellement les éléments suivants. Ils son
 
     Scala : 2.13.16
     
-    Apache Spark : 4.0.1
+    Apache Spark : 3.5.x
 //
 3. Build et Lancement
 Une fois les prérequis système installés :
