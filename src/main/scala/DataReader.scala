@@ -34,7 +34,7 @@ object DataReader {
   val ignore_minuscule = ignore.map(_.toLowerCase())
   val doublon = true
   val index = "Indicateur_Pollution_Global"
-  val auberdf : DataFrame = {
+  lazy val auberdf : DataFrame = {
     println("Chargement d'Auber RER")
     // Étape 1 : Lecture
     val dfRaw = reader(spark, auber_path, doublon, sep)
@@ -126,7 +126,7 @@ object DataReader {
     analyzeDailyPeak(dfIndic, index)
 
   }
-  lazy val reseauidf_df : DataFrame = {
+  val reseauidf_df : DataFrame = {
     println("Chargement réseau idf")
     // Étape 1 : Lecture
     val dfRaw = reader(spark,idf_path, doublon, sep)
@@ -217,7 +217,30 @@ object DataReader {
   def main(args: Array[String]): Unit = {
 
     try{
-      nationml.describe().show()
+      //Transformation Île de France df
+//      val idf_df = reader(spark,"src/Data/le-reseau-de-transport-francilien.csv",false,";")
+//      val idf_tf1 = idf_df.drop("point_geo")
+//              .drop("mesures_d_amelioration_mises_en_place_ou_prevues") //on a déjà les colonnes long & lat
+//              .drop("recommandation_de_surveillance")
+//              .drop("action_s_qai_en_cours")
+//              .drop("lien_vers_les_mesures_en_direct")
+//              .drop("air")
+//              .drop("actions")
+//              .drop("niveau_pollution") // niveau pollution fait une moyenne de pollution entre p_air & p_particules : p_air & p_particules suffisent
+//              .drop("niveau_de_pollution")
+//              .drop("pollution_air")// la donnée est reportée dans niveau sans les incertitudes
+//              .drop("incertitude") //pour simplifier le problème
+//              .drop("duree_des_mesures")
+//
+//
+//      //      //qualitative -> quantitative
+//      val idf_tf2 = encodePollutionLevels(idf_tf1)
+//              .drop("niveau")
+//              .drop("niveau_de_pollution_aux_particules")
+//              .drop("pollution_particules")
+//              .drop("identifiant_station")
+//
+//      idf_tf2.show()
     }catch{
       case e: Exception => println(s"Une erreur est survenue: ${e.getMessage}")
     }finally {
